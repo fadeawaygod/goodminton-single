@@ -6,14 +6,20 @@ export interface Player {
   name: string;
   gender: Gender;
   level: number;
-  labels: string[];
   enabled: boolean;
   isPlaying: boolean;
   isQueuing: boolean;
   gamesPlayed: number;
-  lastGameEndTime?: Date;
 }
 
+// 一組要上場的球員（4人一組）
+export interface PlayerGroup {
+  id: string;
+  players: Player[];
+  createdAt: Date;
+}
+
+// 場地基本資訊
 export interface Court {
   id: string;
   name: string;
@@ -24,18 +30,12 @@ export interface Court {
   isActive: boolean;
 }
 
-export type CourtType = Omit<Court, 'players'> & {
+// 場地類型（包含完整的球員資訊）
+export interface CourtType extends Omit<Court, 'players'> {
   players: Player[];
-};
-
-// 一組要上場的球員（4人一組）
-export interface PlayerGroup {
-  id: string;
-  players: Player[];
-  createdAt: Date;
 }
 
-// 整個排點系統的狀態
+// 系統狀態
 export interface CourtSystemState {
   courts: CourtType[];
   waitingQueue: PlayerGroup[];

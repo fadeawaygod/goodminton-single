@@ -3,21 +3,20 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    IconButton,
-    Button,
     List,
     ListItem,
     ListItemText,
-    ListItemSecondaryAction,
-    Box,
+    IconButton,
     Chip,
+    Box,
+    Fab,
     Typography,
-    Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { deletePlayer, selectAllPlayers } from '../store/playerSlice';
+import { selectAllPlayers, deletePlayer } from '../store/playerSlice';
 import { AddPlayerDialog } from './AddPlayerDialog';
 
 interface PlayerListDialogProps {
@@ -29,79 +28,85 @@ export const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClos
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const players = useAppSelector(selectAllPlayers);
-    const [addDialogOpen, setAddDialogOpen] = useState(false);
+    const [addPlayerOpen, setAddPlayerOpen] = useState(false);
 
     const handleDeletePlayer = (playerId: string) => {
         dispatch(deletePlayer(playerId));
     };
 
     return (
-        <>
-            <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-                <DialogTitle>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        {t('playerList.title')}
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => setAddDialogOpen(true)}
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    {t('playerList.title')}
+                    <Fab
+                        color="primary"
+                        size="small"
+                        onClick={() => setAddPlayerOpen(true)}
+                    >
+                        <AddIcon />
+                    </Fab>
+                </Box>
+            </DialogTitle>
+            <DialogContent>
+                <List>
+                    {players.map((player) => (
+                        <ListItem
+                            key={player.id}
+                            secondaryAction={
+                                <IconButton
+                                    edge="end"
+                                    aria-label="delete"
+                                    onClick={() => handleDeletePlayer(player.id)}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            }
                         >
-                            {t('playerList.addNewPlayer')}
-                        </Button>
-                    </Box>
-                </DialogTitle>
-                <DialogContent>
-                    {players.length === 0 ? (
-                        <Typography color="textSecondary" align="center" sx={{ py: 2 }}>
-                            {t('playerList.noPlayers')}
-                        </Typography>
-                    ) : (
-                        <List>
-                            {players.map((player) => (
-                                <ListItem key={player.id}>
-                                    <ListItemText
-                                        primary={player.name}
-                                        secondary={
-                                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
-                                                <Chip
-                                                    size="small"
-                                                    label={`${t('playerList.level')}: ${player.level}`}
-                                                />
-                                                <Chip
-                                                    size="small"
-                                                    label={t(`playerList.${player.gender}`)}
-                                                />
-                                                {player.labels.map((label) => (
-                                                    <Chip
-                                                        key={label}
-                                                        size="small"
-                                                        label={label}
-                                                    />
-                                                ))}
-                                            </Box>
-                                        }
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Tooltip title={t('common.delete')}>
-                                            <IconButton
-                                                edge="end"
-                                                onClick={() => handleDeletePlayer(player.id)}
+                            <ListItemText
+                                primary={
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                        <Typography>{player.name}</Typography>
+                                        <Chip
+                                            size="small"
+                                            label={t(`playerList.genders.${player.gender}`)}
+                                        />
+                                        <Chip
+                                            size="small"
+                                            label={`Lv.${player.level}`}
+                                        />
+                                        {player.isPlaying && (
+                                            <Chip
                                                 size="small"
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                        </List>
-                    )}
-                </DialogContent>
-            </Dialog>
+                                                color="primary"
+                                                label={t('playerList.status.playing')}
+                                            />
+                                        )}
+                                        {player.isQueuing && (
+                                            <Chip
+                                                size="small"
+                                                color="secondary"
+                                                label={t('playerList.status.waiting')}
+                                            />
+                                        )}
+                                        {!player.isPlaying && !player.isQueuing && (
+                                            <Chip
+                                                size="small"
+                                                variant="outlined"
+                                                label={t('playerList.status.standby')}
+                                            />
+                                        )}
+                                    </Box>
+                                }
+                            />
+                        </ListItem>
+                    ))}
+                </List>
+            </DialogContent>
             <AddPlayerDialog
-                open={addDialogOpen}
-                onClose={() => setAddDialogOpen(false)}
+                open={addPlayerOpen}
+                onClose={() => setAddPlayerOpen(false)}
             />
-        </>
+        </Dialog>
     );
 }; 

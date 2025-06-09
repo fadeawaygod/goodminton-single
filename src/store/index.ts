@@ -1,37 +1,51 @@
 import { configureStore } from '@reduxjs/toolkit';
-import playerReducer, { PlayerState } from './playerSlice';
+import playerReducer from './playerSlice';
+
+interface PlayerState {
+    players: {
+        id: string;
+        name: string;
+        gender: 'male' | 'female' | 'unknown';
+        level: number;
+        enabled: boolean;
+        isPlaying: boolean;
+        isQueuing: boolean;
+        gamesPlayed: number;
+    }[];
+}
 
 const loadPlayersFromStorage = (): PlayerState => {
     try {
-        const storedPlayers = localStorage.getItem('goodminton_players');
-        if (storedPlayers) {
-            const players = JSON.parse(storedPlayers);
-            return {
-                players: players.map((p: any) => ({
-                    ...p,
-                    lastGameEndTime: p.lastGameEndTime ? new Date(p.lastGameEndTime) : undefined
-                }))
-            };
-        }
+        const playersJson = localStorage.getItem('players');
+        if (!playersJson) return { players: [] };
+        const players = JSON.parse(playersJson);
+        if (!Array.isArray(players)) return { players: [] };
+        return { players };
     } catch (e) {
-        console.error('Failed to load players from localStorage:', e);
+        console.error('Failed to parse players from localStorage:', e);
+        return { players: [] };
     }
-    return { players: [] };
+};
+
+const savePlayersToStorage = (state: RootState) => {
+    try {
+        localStorage.setItem('players', JSON.stringify(state.players.players));
+    } catch (e) {
+        console.error('Failed to save players to localStorage:', e);
+    }
 };
 
 export const store = configureStore({
     reducer: {
-        players: playerReducer
+        players: playerReducer,
     },
     preloadedState: {
-        players: loadPlayersFromStorage()
-    }
+        players: loadPlayersFromStorage(),
+    },
 });
 
-// Save to localStorage whenever the state changes
 store.subscribe(() => {
-    const state = store.getState();
-    localStorage.setItem('goodminton_players', JSON.stringify(state.players.players));
+    savePlayersToStorage(store.getState());
 });
 
 export type RootState = ReturnType<typeof store.getState>;

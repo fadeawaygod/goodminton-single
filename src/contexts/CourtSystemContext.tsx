@@ -5,20 +5,18 @@ const STORAGE_KEY = 'goodminton_players';
 const INIT_COURTS = 4;
 
 const loadPlayersFromStorage = (): Player[] => {
-    const storedPlayers = localStorage.getItem(STORAGE_KEY);
-    if (storedPlayers) {
-        try {
-            const players = JSON.parse(storedPlayers);
-            return players.map((p: Player) => ({
-                ...p,
-                lastGameEndTime: p.lastGameEndTime ? new Date(p.lastGameEndTime) : undefined
-            }));
-        } catch (e) {
-            console.error('Failed to parse players from localStorage:', e);
-            return [];
-        }
+    try {
+        const playersJson = localStorage.getItem('players');
+        if (!playersJson) return [];
+        const players = JSON.parse(playersJson);
+        if (!Array.isArray(players)) return [];
+        return players.map((p: Player) => ({
+            ...p,
+        }));
+    } catch (e) {
+        console.error('Failed to parse players from localStorage:', e);
+        return [];
     }
-    return [];
 };
 
 interface CourtSystemContextType {
@@ -32,7 +30,7 @@ interface CourtSystemContextType {
     addPlayer: (player: Omit<Player, 'id' | 'enabled' | 'isPlaying' | 'isQueuing' | 'gamesPlayed'>) => void;
     removePlayer: (id: string) => void;
     togglePlayerEnabled: (id: string) => void;
-    updatePlayerStatus: (playerId: string, isPlaying?: boolean, isQueuing?: boolean) => void;
+    updatePlayerStatus: (playerId: string, isPlaying: boolean, isQueuing: boolean) => void;
     incrementGameCount: (playerId: string) => void;
     moveToStandby: (players: Player[]) => void;
     removeFromStandby: (playerIds: string[]) => void;
@@ -101,19 +99,16 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }));
     };
 
-    const updatePlayerStatus = (playerId: string, isPlaying?: boolean, isQueuing?: boolean) => {
+    const updatePlayerStatus = (playerId: string, isPlaying: boolean, isQueuing: boolean) => {
         setPlayers(prev => prev.map(p => {
             if (p.id === playerId) {
-                const newPlayer = { ...p };
-                if (typeof isPlaying !== 'undefined') {
-                    newPlayer.isPlaying = isPlaying;
-                }
-                if (typeof isQueuing !== 'undefined') {
-                    newPlayer.isQueuing = isQueuing;
-                }
+                const newPlayer = {
+                    ...p,
+                    isPlaying,
+                    isQueuing,
+                };
                 if (!isPlaying && p.isPlaying) {
                     newPlayer.gamesPlayed += 1;
-                    newPlayer.lastGameEndTime = new Date();
                 }
                 return newPlayer;
             }
@@ -127,7 +122,6 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 return {
                     ...p,
                     gamesPlayed: p.gamesPlayed + 1,
-                    lastGameEndTime: new Date()
                 };
             }
             return p;
