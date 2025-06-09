@@ -11,9 +11,8 @@ import { CourtSystemProvider } from './contexts/CourtSystemContext';
 import { Provider } from 'react-redux';
 import { store } from './store';
 
-// 判斷是否在 GitHub Pages 環境
-const isGitHubPages = window.location.hostname.includes('github.io');
-const basePath = isGitHubPages ? '/goodminton-single' : '';
+// 使用 PUBLIC_URL 作為 basename
+const basePath = process.env.PUBLIC_URL || '';
 
 const theme = createTheme({
   palette: {
