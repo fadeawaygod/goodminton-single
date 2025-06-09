@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Chip } from '@mui/material';
+import { Chip, Box, Typography } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
@@ -50,28 +50,31 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player }) => {
                 touchAction: 'none',
             }}
         >
-            <Chip
-                label={player.name}
-                icon={<PersonIcon />}
-                color={player.isPlaying ? "primary" : "default"}
-                sx={{
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    MozUserSelect: 'none',
-                    '& .MuiChip-label': {
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                    },
-                    '& .MuiChip-icon': {
-                        color: `${genderColors[player.gender]} !important`
-                    },
-                    backgroundColor: player.isPlaying ? chameleonColors.primary : chameleonColors.secondary,
-                    color: 'white',
-                    '&:hover': {
-                        backgroundColor: player.isPlaying ? chameleonColors.hover : chameleonColors.primary,
-                    },
-                    transition: 'all 0.3s ease',
-                }}
-            />
-        </div>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Chip
+                    label={`${player.name} ${player.gameCount}`}
+                    icon={<PersonIcon />}
+                    color={player.isPlaying ? "primary" : "default"}
+                    sx={{
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        '& .MuiChip-label': {
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                        },
+                        '& .MuiChip-icon': {
+                            color: `${genderColors[player.gender]} !important`
+                        },
+                        backgroundColor: player.isPlaying ? chameleonColors.primary : chameleonColors.secondary,
+                        color: 'white',
+                        '&:hover': {
+                            backgroundColor: player.isPlaying ? chameleonColors.hover : chameleonColors.primary,
+                        },
+                        transition: 'all 0.3s ease',
+                    }}
+                />
+
+            </Box>
+        </div >
     );
 }; 
