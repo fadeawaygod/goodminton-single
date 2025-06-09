@@ -30,7 +30,7 @@ export const DroppableQueueArea: React.FC<DroppableQueueAreaProps> = ({
             if (!didDropInChild) {
                 if (item.type === ItemTypes.PLAYER) {
                     onCreateNewGroup(item);
-                } else if (item.type === ItemTypes.GROUP && item.isPlayingGroup) {
+                } else if (item.type === ItemTypes.GROUP && item.fromCourt) {
                     onPlayingGroupDrop(item.players);
                 }
             }
@@ -39,7 +39,7 @@ export const DroppableQueueArea: React.FC<DroppableQueueAreaProps> = ({
         collect: (monitor) => ({
             isOver: monitor.isOver({ shallow: true }),
         }),
-    }));
+    }), [onCreateNewGroup, onPlayingGroupDrop]);
 
     const elementRef = useCallback(
         (node: HTMLElement | null) => {

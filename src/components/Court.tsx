@@ -1,5 +1,9 @@
 import React from 'react';
+import { Box, Paper, Typography, Button } from '@mui/material';
 import { CourtType } from '../types/court';
+import { CourtGroup } from './CourtGroup';
+import { useTranslation } from 'react-i18next';
+import { chameleonColors } from '../constants/court';
 
 interface CourtProps {
     court: CourtType;
@@ -7,35 +11,62 @@ interface CourtProps {
 }
 
 const Court: React.FC<CourtProps> = ({ court, onFinishGame }) => {
+    const { t } = useTranslation();
+
     const handleFinishGame = () => {
         onFinishGame?.(court.id);
     };
 
     return (
-        <div className="border p-4 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold mb-2">Court {court.number}</h3>
-            <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                    <span>Status: {court.isActive ? 'Active' : 'Available'}</span>
-                    {court.isActive && (
-                        <button
-                            onClick={handleFinishGame}
-                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        >
-                            Finish Game
-                        </button>
-                    )}
-                </div>
-                <div>
-                    <h4 className="font-medium mb-1">Players:</h4>
-                    <ul className="list-disc list-inside">
-                        {court.players.map((player) => (
-                            <li key={player.id}>{player.name}</li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </div>
+        <Paper
+            elevation={2}
+            sx={{
+                p: 2,
+                border: '1px solid',
+                borderColor: chameleonColors.border,
+                backgroundColor: chameleonColors.background,
+                borderRadius: 2,
+                height: '100%',
+            }}
+        >
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">
+                    {t('court.number', { number: court.number })}
+                </Typography>
+                {court.isActive && (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={handleFinishGame}
+                    >
+                        {t('court.finishGame')}
+                    </Button>
+                )}
+            </Box>
+            {court.players.length > 0 ? (
+                <CourtGroup
+                    players={court.players}
+                    courtNumber={court.number}
+                    courtId={court.id}
+                />
+            ) : (
+                <Box
+                    sx={{
+                        p: 2,
+                        border: '1px dashed',
+                        borderColor: 'grey.400',
+                        borderRadius: 1,
+                        textAlign: 'center',
+                        color: 'text.secondary',
+                    }}
+                >
+                    <Typography>
+                        {t('court.dropHere')}
+                    </Typography>
+                </Box>
+            )}
+        </Paper>
     );
 };
 

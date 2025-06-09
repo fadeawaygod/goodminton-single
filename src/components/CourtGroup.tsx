@@ -10,10 +10,11 @@ import { useTranslation } from 'react-i18next';
 
 interface CourtGroupProps {
     players: Player[];
+    courtNumber: number;
     courtId: string;
 }
 
-export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtId }) => {
+export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtNumber, courtId }) => {
     const { t } = useTranslation();
 
     const [{ isDragging }, dragRef, preview] = useDrag(() => ({
@@ -21,23 +22,23 @@ export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtId }) => {
         item: {
             type: ItemTypes.GROUP,
             players,
-            fromCourtId: courtId,
-            isPlayingGroup: true
+            isPlayingGroup: true,
+            fromCourt: true,
+            courtId,
+            courtNumber
         },
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         }),
-    }), [courtId, players]);
+    }), [players, courtNumber, courtId]);
 
     useEffect(() => {
         preview(getEmptyImage(), { captureDraggingState: true });
     }, [preview]);
 
     const elementRef = useCallback(
-        (node: HTMLElement | null) => {
-            if (dragRef) {
-                dragRef(node);
-            }
+        (node: HTMLDivElement | null) => {
+            dragRef(node);
         },
         [dragRef]
     );
@@ -45,25 +46,22 @@ export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtId }) => {
     return (
         <div
             ref={elementRef}
-            data-testid={`court-group-${courtId}`}
             style={{
                 opacity: isDragging ? 0.5 : 1,
                 cursor: 'move',
-                width: '100%',
-                height: '100%',
+                position: 'relative',
+                transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+                transition: 'transform 0.2s ease',
             }}
         >
             <Paper
-                elevation={2}
+                elevation={isDragging ? 4 : 2}
                 sx={{
-                    p: 1,
+                    p: 2,
                     border: '1px solid',
-                    borderColor: chameleonColors.group.border,
-                    backgroundColor: chameleonColors.group.background,
+                    borderColor: chameleonColors.border,
+                    backgroundColor: chameleonColors.background,
                     borderRadius: 2,
-                    height: '100%',
-                    position: 'relative',
-                    transition: 'all 0.3s ease',
                 }}
             >
                 <Box
@@ -71,13 +69,13 @@ export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtId }) => {
                         position: 'absolute',
                         top: -20,
                         left: 10,
-                        backgroundColor: chameleonColors.group.header,
+                        backgroundColor: chameleonColors.primary,
                         color: 'white',
                         padding: '2px 8px',
                         borderRadius: '4px 4px 0 0',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 0.5,
+                        gap: '4px',
                         zIndex: 1,
                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     }}
@@ -87,12 +85,7 @@ export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtId }) => {
                         {t('court.playing')}
                     </Typography>
                 </Box>
-                <Box sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 0.5,
-                    pt: 1
-                }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {players.map(player => (
                         <DraggablePlayer
                             key={player.id}

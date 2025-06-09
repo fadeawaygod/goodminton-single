@@ -67,7 +67,7 @@
         "autoAssignDisabled": "已關閉自動上場",
         "playerAlreadyInGroup": "該球員已在此隊伍中，無法重複加入。",
         "playerAlreadyInCourt": "該球員已在此場地，無法重複加入。",
-        "ttsCallToCourt": "請{{names}}到{{number}}號場地上場"
+        "ttsCallToCourt": "請{{names}}到{{number}}號場地"
     },
     "validation": {
         "required": "此欄位為必填",
