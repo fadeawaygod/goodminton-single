@@ -722,7 +722,6 @@ const CourtSystem: React.FC = () => {
         movePlayersToStandby,
         courtCount,
         allPlayers,
-        togglePlayerEnabled
     } = useCourtSystem();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
@@ -1232,81 +1231,6 @@ const CourtSystem: React.FC = () => {
         });
     };
 
-    // 獲取所有球員列表
-    const getAllPlayers = () => {
-        const courtPlayers = courts.flatMap(court => court.players);
-        const queuePlayers = waitingQueue.flatMap(group => group.players);
-        const allPlayers = [...courtPlayers, ...queuePlayers, ...standbyPlayers];
-        // 去重並設置 enabled 狀態
-        return Array.from(new Map(allPlayers.map(p => [p.id, {
-            ...p,
-            enabled: true // 如果球員在任何列表中，就代表是啟用的
-        }])).values());
-    };
-
-    // 處理球員啟用/禁用
-    const handleTogglePlayer = (playerId: string, enabled: boolean) => {
-        setSystemState(prevState => {
-            // 如果要禁用球員
-            if (!enabled) {
-                // 從所有區域移除該球員
-                const updatedCourts = prevState.courts.map(court => ({
-                    ...court,
-                    players: court.players.filter(p => p.id !== playerId),
-                    isActive: court.players.filter(p => p.id !== playerId).length === 4
-                }));
-
-                const updatedWaitingQueue = prevState.waitingQueue
-                    .map(group => ({
-                        ...group,
-                        players: group.players.filter(p => p.id !== playerId)
-                    }))
-                    .filter(group => group.players.length > 0);
-
-                const updatedStandbyPlayers = prevState.standbyPlayers.filter(p => p.id !== playerId);
-
-                // 顯示提示訊息
-                setSnackbar({
-                    open: true,
-                    message: t('players.playerDisabled'),
-                    severity: 'info'
-                });
-
-                return {
-                    ...prevState,
-                    courts: updatedCourts,
-                    waitingQueue: updatedWaitingQueue,
-                    standbyPlayers: updatedStandbyPlayers
-                };
-            }
-            // 如果要啟用球員
-            else {
-                // 找到該球員
-                const player = getAllPlayers().find(p => p.id === playerId);
-                if (!player) return prevState;
-
-                // 將球員添加到待命區，並更新其狀態
-                const updatedPlayer = {
-                    ...player,
-                    enabled: true,
-                    isPlaying: false,
-                    isQueuing: false
-                };
-
-                // 顯示提示訊息
-                setSnackbar({
-                    open: true,
-                    message: t('players.playerEnabled'),
-                    severity: 'success'
-                });
-
-                return {
-                    ...prevState,
-                    standbyPlayers: [...prevState.standbyPlayers, updatedPlayer]
-                };
-            }
-        });
-    };
 
     function playTTS(text: string, lang: string = 'zh-TW') {
         if (!ttsEnabled) return Promise.resolve();
