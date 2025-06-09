@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Player, Gender, Court, PlayerGroup, CourtSystemState } from '../types/court';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { selectAllPlayers } from '../store/playerSlice';
 
 const STORAGE_KEY = 'goodminton_players';
 const INIT_COURTS = 4;
@@ -41,6 +43,7 @@ interface CourtSystemContextType {
     setCourtCount: (count: number) => void;
     finishGame: (courtId: string) => void;
     movePlayersToStandby: (players: Player[]) => void;
+    setAutoAssign: (value: boolean) => void;
 }
 
 export const CourtSystemContext = createContext<CourtSystemContextType | undefined>(undefined);
@@ -50,8 +53,9 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [courts, setCourts] = useState<Court[]>([]);
     const [standbyPlayers, setStandbyPlayers] = useState<Player[]>([]);
     const [waitingQueue, setWaitingQueue] = useState<PlayerGroup[]>([]);
-    const [autoAssign, setAutoAssign] = useState(true);
+    const [autoAssign, setAutoAssign] = useState(false);
     const [courtCount, setCourtCount] = useState(INIT_COURTS);
+    const allPlayers = useAppSelector(selectAllPlayers);
 
     // Initialize courts
     useEffect(() => {
@@ -70,6 +74,17 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
     }, [players]);
+
+    useEffect(() => {
+        // 當球員列表變化時，更新待命區
+        // 1. 保留所有已經在待命區且仍然啟用的球員
+        // 2. 添加所有新啟用的球員到待命區
+        const updatedStandbyPlayers = allPlayers.filter(player =>
+            player.enabled && !player.isPlaying && !player.isQueuing
+        );
+
+        setStandbyPlayers(updatedStandbyPlayers);
+    }, [allPlayers]);
 
     const addPlayer = (playerData: Omit<Player, 'id' | 'enabled' | 'isPlaying' | 'isQueuing' | 'gamesPlayed'>) => {
         const newPlayer: Player = {
@@ -100,20 +115,20 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
 
     const updatePlayerStatus = (playerId: string, isPlaying: boolean, isQueuing: boolean) => {
-        setPlayers(prev => prev.map(p => {
-            if (p.id === playerId) {
-                const newPlayer = {
-                    ...p,
-                    isPlaying,
-                    isQueuing,
-                };
-                if (!isPlaying && p.isPlaying) {
-                    newPlayer.gamesPlayed += 1;
+        setStandbyPlayers(prev => {
+            // 如果球員變成非打球和非排隊狀態，且是啟用的，就加入待命區
+            const player = allPlayers.find(p => p.id === playerId);
+            if (!isPlaying && !isQueuing && player?.enabled) {
+                if (!prev.some(p => p.id === playerId)) {
+                    return [...prev, player];
                 }
-                return newPlayer;
             }
-            return p;
-        }));
+            // 如果球員開始打球或排隊，就從待命區移除
+            if (isPlaying || isQueuing) {
+                return prev.filter(p => p.id !== playerId);
+            }
+            return prev;
+        });
     };
 
     const incrementGameCount = (playerId: string) => {
@@ -128,22 +143,14 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }));
     };
 
-    const moveToStandby = (playersToMove: Player[]) => {
-        const playerIds = playersToMove.map(p => p.id);
-        setStandbyPlayers(prev => [
-            ...prev,
-            ...playersToMove.filter(p => !prev.some(sp => sp.id === p.id))
-        ]);
-        setPlayers(prev => prev.map(player => {
-            if (playerIds.includes(player.id)) {
-                return {
-                    ...player,
-                    isPlaying: false,
-                    isQueuing: false
-                };
-            }
-            return player;
-        }));
+    const moveToStandby = (players: Player[]) => {
+        setStandbyPlayers(prev => {
+            const newPlayers = players.filter(p =>
+                p.enabled && // 只添加已啟用的球員
+                !prev.some(existingPlayer => existingPlayer.id === p.id) // 避免重複
+            );
+            return [...prev, ...newPlayers];
+        });
     };
 
     const removeFromStandby = (playerIds: string[]) => {
@@ -201,9 +208,6 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const movePlayersToStandby = moveToStandby;
 
-    // Calculate allPlayers based on current state
-    const allPlayers = players;
-
     return (
         <CourtSystemContext.Provider value={{
             players,
@@ -226,7 +230,8 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
             updateCourtPlayers,
             setCourtCount,
             finishGame,
-            movePlayersToStandby
+            movePlayersToStandby,
+            setAutoAssign
         }}>
             {children}
         </CourtSystemContext.Provider>

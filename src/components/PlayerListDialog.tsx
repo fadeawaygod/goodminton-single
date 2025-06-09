@@ -11,12 +11,14 @@ import {
     Box,
     Fab,
     Typography,
+    Switch,
+    Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { selectAllPlayers, deletePlayer } from '../store/playerSlice';
+import { selectAllPlayers, deletePlayer, togglePlayerEnabled } from '../store/playerSlice';
 import { AddPlayerDialog } from './AddPlayerDialog';
 
 interface PlayerListDialogProps {
@@ -32,6 +34,10 @@ export const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClos
 
     const handleDeletePlayer = (playerId: string) => {
         dispatch(deletePlayer(playerId));
+    };
+
+    const handleToggleEnabled = (playerId: string) => {
+        dispatch(togglePlayerEnabled(playerId));
     };
 
     return (
@@ -54,13 +60,24 @@ export const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClos
                         <ListItem
                             key={player.id}
                             secondaryAction={
-                                <IconButton
-                                    edge="end"
-                                    aria-label="delete"
-                                    onClick={() => handleDeletePlayer(player.id)}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                    <Tooltip title={player.enabled ? t('players.disablePlayer') : t('players.enablePlayer')}>
+                                        <Switch
+                                            edge="end"
+                                            checked={player.enabled}
+                                            onChange={() => handleToggleEnabled(player.id)}
+                                            disabled={player.isPlaying || player.isQueuing}
+                                        />
+                                    </Tooltip>
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="delete"
+                                        onClick={() => handleDeletePlayer(player.id)}
+                                        disabled={player.isPlaying || player.isQueuing}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Box>
                             }
                         >
                             <ListItemText

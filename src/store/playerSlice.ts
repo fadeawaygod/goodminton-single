@@ -35,6 +35,22 @@ export const playerSlice = createSlice({
         deletePlayer: (state, action: PayloadAction<string>) => {
             state.players = state.players.filter(player => player.id !== action.payload);
         },
+        togglePlayerEnabled: (state, action: PayloadAction<string>) => {
+            const player = state.players.find(p => p.id === action.payload);
+            if (player && !player.isPlaying && !player.isQueuing) {
+                player.enabled = !player.enabled;
+            }
+        },
+        updatePlayerStatus: (state, action: PayloadAction<{ id: string; isPlaying: boolean; isQueuing: boolean }>) => {
+            const player = state.players.find(p => p.id === action.payload.id);
+            if (player) {
+                player.isPlaying = action.payload.isPlaying;
+                player.isQueuing = action.payload.isQueuing;
+                if (!action.payload.isPlaying && player.isPlaying) {
+                    player.gamesPlayed += 1;
+                }
+            }
+        },
         updatePlayerGameCount: (state, action: PayloadAction<string>) => {
             const player = state.players.find(p => p.id === action.payload);
             if (player) {
@@ -53,6 +69,8 @@ export const playerSlice = createSlice({
 export const {
     addPlayer,
     deletePlayer,
+    togglePlayerEnabled,
+    updatePlayerStatus,
     updatePlayerGameCount,
     resetPlayerGameCount
 } = playerSlice.actions;
