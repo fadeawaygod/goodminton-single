@@ -2,7 +2,27 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { courtReducer, createInitialState } from '../reducers/courtReducer';
 import { checkAndAssignCourt } from '../utils/courtUtils';
 import { CourtType, PlayerGroup, Player, Gender } from '../types/court';
-import { generateTestPlayers } from '../utils/testData';
+
+const STORAGE_KEY = 'goodminton_players';
+
+// 從 localStorage 讀取球員資料，如果沒有則返回空陣列
+const loadPlayersFromStorage = (): Player[] => {
+    const storedPlayers = localStorage.getItem(STORAGE_KEY);
+    if (storedPlayers) {
+        try {
+            const players = JSON.parse(storedPlayers);
+            // 確保日期欄位正確轉換回 Date 物件
+            return players.map((p: Player) => ({
+                ...p,
+                lastEnabledTime: p.lastEnabledTime ? new Date(p.lastEnabledTime) : undefined
+            }));
+        } catch (e) {
+            console.error('Failed to parse players from localStorage:', e);
+            return [];
+        }
+    }
+    return [];
+};
 
 interface CourtSystemContextType {
     courtCount: number;
@@ -25,9 +45,14 @@ const INIT_COURTS = 4;
 
 export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(courtReducer, INIT_COURTS, (initialCount) =>
-        createInitialState(initialCount, generateTestPlayers())
+        createInitialState(initialCount, loadPlayersFromStorage())
     );
-    const [allPlayers, setAllPlayers] = React.useState<Player[]>(generateTestPlayers());
+    const [allPlayers, setAllPlayers] = React.useState<Player[]>(loadPlayersFromStorage());
+
+    // 當球員列表變更時，保存到 localStorage
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allPlayers));
+    }, [allPlayers]);
 
     useEffect(() => {
         if (state.autoAssign) {
