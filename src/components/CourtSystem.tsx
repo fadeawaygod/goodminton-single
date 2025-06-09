@@ -31,7 +31,7 @@ import { Player, PlayerGroup } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
 import { useCourtSystem } from '../contexts/CourtSystemContext';
 import CourtSettingsDialog from './CourtSettingsDialog';
-import PlayerListDialog from './PlayerListDialog';
+import { PlayerListDialog } from './PlayerListDialog';
 
 // 定義拖拽類型
 const ItemTypes = {
@@ -726,7 +726,7 @@ const CourtSystem: React.FC = () => {
     } = useCourtSystem();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
-    const [playerListOpen, setPlayerListOpen] = useState(false);
+    const [isPlayerListOpen, setIsPlayerListOpen] = useState(false);
 
     // 初始狀態
     const [systemState, setSystemState] = useState<CourtSystemState>({
@@ -1365,10 +1365,8 @@ const CourtSystem: React.FC = () => {
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
             <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
             <PlayerListDialog
-                open={playerListOpen}
-                onClose={() => setPlayerListOpen(false)}
-                players={allPlayers}
-                onTogglePlayer={togglePlayerEnabled}
+                open={isPlayerListOpen}
+                onClose={() => setIsPlayerListOpen(false)}
             />
             <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Grid container spacing={3}>
@@ -1382,7 +1380,7 @@ const CourtSystem: React.FC = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Tooltip title={t('players.viewPlayers')}>
                                     <IconButton
-                                        onClick={() => setPlayerListOpen(true)}
+                                        onClick={() => setIsPlayerListOpen(true)}
                                         size="small"
                                         aria-label="view players"
                                     >

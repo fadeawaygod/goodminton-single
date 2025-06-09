@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { courtReducer, createInitialState } from '../reducers/courtReducer';
 import { checkAndAssignCourt } from '../utils/courtUtils';
-import { CourtType, PlayerGroup, Player } from '../types/court';
+import { CourtType, PlayerGroup, Player, Gender } from '../types/court';
 import { generateTestPlayers } from '../utils/testData';
 
 interface CourtSystemContextType {
@@ -16,6 +16,7 @@ interface CourtSystemContextType {
     finishGame: (courtId: string) => void;
     movePlayersToStandby: (players: Player[]) => void;
     togglePlayerEnabled: (playerId: string) => void;
+    addPlayer: (playerData: { name: string; gender: Gender; level: number; labels: string[] }) => void;
 }
 
 const CourtSystemContext = createContext<CourtSystemContextType | undefined>(undefined);
@@ -79,6 +80,21 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     };
 
+    const addPlayer = (playerData: { name: string; gender: Gender; level: number; labels: string[] }) => {
+        const newPlayer: Player = {
+            id: `player-${Date.now()}`,
+            ...playerData,
+            enabled: true,
+            isPlaying: false,
+            isQueuing: false,
+            lastEnabledTime: new Date(),
+            gameCount: 0
+        };
+
+        setAllPlayers(prev => [...prev, newPlayer]);
+        dispatch({ type: 'ADD_PLAYER', player: newPlayer });
+    };
+
     return (
         <CourtSystemContext.Provider value={{
             courtCount: state.courts.length,
@@ -92,6 +108,7 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
             finishGame,
             movePlayersToStandby,
             togglePlayerEnabled,
+            addPlayer,
         }}>
             {children}
         </CourtSystemContext.Provider>

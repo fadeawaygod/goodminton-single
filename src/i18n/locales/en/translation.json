@@ -75,5 +75,30 @@
         "required": "This field is required",
         "phoneFormat": "Please enter a valid phone number",
         "emailFormat": "Please enter a valid email address"
+    },
+    "playerList": {
+        "title": "Player List",
+        "addPlayer": "Add Player",
+        "addNewPlayer": "Add New Player",
+        "playerName": "Player Name",
+        "gender": "Gender",
+        "genders": {
+            "male": "Male",
+            "female": "Female",
+            "unknown": "Unspecified"
+        },
+        "level": "Level",
+        "levelHelp": "1 for beginner, 14 for top player",
+        "labels": "Labels",
+        "addLabel": "Add Label",
+        "add": "Add",
+        "status": {
+            "playing": "Playing",
+            "waiting": "Waiting",
+            "standby": "Standby"
+        },
+        "errors": {
+            "nameExists": "This player name already exists"
+        }
     }
 }

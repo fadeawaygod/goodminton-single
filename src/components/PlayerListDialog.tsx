@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -6,142 +6,103 @@ import {
     List,
     ListItem,
     ListItemText,
-    ListItemSecondaryAction,
-    IconButton,
-    Typography,
-    Box,
     Switch,
-    styled,
+    Box,
+    Button
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
-import { Player } from '../types/court';
+import { useCourtSystem } from '../contexts/CourtSystemContext';
+import { styled } from '@mui/material/styles';
+import AddIcon from '@mui/icons-material/Add';
+import { AddPlayerDialog } from './AddPlayerDialog';
 
-// 自定義 Switch 組件樣式
-const CustomSwitch = styled(Switch)(({ theme }) => ({
-    '& .MuiSwitch-switchBase': {
-        '&.Mui-checked': {
-            color: '#4CAF50',
-            '& + .MuiSwitch-track': {
-                backgroundColor: '#4CAF50',
-                opacity: 0.5,
-            },
-            '&.Mui-disabled': {
-                color: theme.palette.grey[400],
-            },
-        },
-        '&.Mui-disabled + .MuiSwitch-track': {
-            opacity: 0.3,
-        },
+const StyledSwitch = styled(Switch)(({ theme }) => ({
+    '& .MuiSwitch-switchBase.Mui-checked': {
+        color: theme.palette.success.main,
+        '&:hover': {
+            backgroundColor: theme.palette.success.light
+        }
     },
-    '& .MuiSwitch-track': {
-        backgroundColor: theme.palette.grey[400],
-        opacity: 0.3,
-    },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+        backgroundColor: theme.palette.success.main
+    }
 }));
 
 interface PlayerListDialogProps {
     open: boolean;
     onClose: () => void;
-    players: Player[];
-    onTogglePlayer: (playerId: string, enabled: boolean) => void;
 }
 
-const PlayerListDialog: React.FC<PlayerListDialogProps> = ({
-    open,
-    onClose,
-    players,
-    onTogglePlayer
-}) => {
+export const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
-
-    const handleToggle = (player: Player) => {
-        onTogglePlayer(player.id, !player.enabled);
-    };
+    const { allPlayers, togglePlayerEnabled } = useCourtSystem();
+    const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
 
     return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            maxWidth="sm"
-            fullWidth
-        >
-            <DialogTitle>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Typography variant="h6">
-                        {t('players.playerList')}
-                    </Typography>
-                    <IconButton
-                        edge="end"
-                        color="inherit"
-                        onClick={onClose}
-                        aria-label="close"
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-            </DialogTitle>
-            <DialogContent dividers>
-                {players.length === 0 ? (
-                    <Typography color="textSecondary" align="center" py={2}>
-                        {t('players.noPlayers')}
-                    </Typography>
-                ) : (
+        <>
+            <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        {t('playerList.title')}
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setIsAddPlayerDialogOpen(true)}
+                            size="small"
+                        >
+                            {t('playerList.addPlayer')}
+                        </Button>
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
                     <List>
-                        {players.map((player) => (
+                        {allPlayers.map((player) => (
                             <ListItem
                                 key={player.id}
+                                secondaryAction={
+                                    <StyledSwitch
+                                        edge="end"
+                                        checked={player.enabled}
+                                        onChange={() => togglePlayerEnabled(player.id)}
+                                    />
+                                }
                                 sx={{
-                                    opacity: player.enabled ? 1 : 0.6,
-                                    transition: 'opacity 0.3s ease',
+                                    opacity: player.enabled ? 1 : 0.5,
+                                    transition: 'opacity 0.2s'
                                 }}
                             >
                                 <ListItemText
-                                    primary={
-                                        <Typography
-                                            component="span"
-                                            variant="body1"
-                                            sx={{
-                                                fontWeight: player.enabled ? 500 : 400,
-                                                color: player.enabled ? 'text.primary' : 'text.secondary',
-                                            }}
-                                        >
-                                            {player.name}
-                                        </Typography>
-                                    }
+                                    primary={player.name}
                                     secondary={
-                                        <Typography
-                                            component="span"
-                                            variant="body2"
-                                            sx={{
-                                                color: player.enabled ?
-                                                    (player.isPlaying ? 'success.main' :
-                                                        player.isQueuing ? 'info.main' : 'text.secondary')
-                                                    : 'text.disabled'
-                                            }}
-                                        >
-                                            {player.isPlaying
-                                                ? t('court.playing')
-                                                : player.isQueuing
-                                                    ? t('court.waiting')
-                                                    : t('court.standby')}
-                                        </Typography>
+                                        player.isPlaying
+                                            ? t('playerList.status.playing')
+                                            : player.isQueuing
+                                                ? t('playerList.status.waiting')
+                                                : t('playerList.status.standby')
                                     }
+                                    primaryTypographyProps={{
+                                        variant: 'body1',
+                                        fontWeight: player.enabled ? 500 : 400
+                                    }}
+                                    secondaryTypographyProps={{
+                                        sx: {
+                                            color: player.isPlaying
+                                                ? 'success.main'
+                                                : player.isQueuing
+                                                    ? 'info.main'
+                                                    : 'text.secondary'
+                                        }
+                                    }}
                                 />
-                                <ListItemSecondaryAction>
-                                    <CustomSwitch
-                                        edge="end"
-                                        checked={player.enabled}
-                                        onChange={() => handleToggle(player)}
-                                    />
-                                </ListItemSecondaryAction>
                             </ListItem>
                         ))}
                     </List>
-                )}
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
+            <AddPlayerDialog
+                open={isAddPlayerDialogOpen}
+                onClose={() => setIsAddPlayerDialogOpen(false)}
+            />
+        </>
     );
-};
-
-export default PlayerListDialog; 
+}; 

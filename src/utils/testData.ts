@@ -1,5 +1,6 @@
 import { Player } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
+import { Gender } from '../types/court';
 
 // 生成測試球員數據
 export const generateTestPlayers = (): Player[] => {
@@ -13,8 +14,12 @@ export const generateTestPlayers = (): Player[] => {
     return names.map(name => ({
         id: uuidv4(),
         name,
+        gender: 'unknown' as Gender,
+        level: 7,
+        labels: [],
         isPlaying: false,
         isQueuing: false,
-        enabled: true
+        enabled: true,
+        gameCount: 0
     }));
 }; 

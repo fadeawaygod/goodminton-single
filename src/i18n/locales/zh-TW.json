@@ -1,0 +1,25 @@
+{
+    "court": {
+        "playing": "比賽中",
+        "waiting": "等待中",
+        "standby": "待命中",
+        "finish": "結束比賽",
+        "moveToStandby": "移至待命區"
+    },
+    "playerList": {
+        "title": "球員列表",
+        "addPlayer": "新增球員",
+        "addNewPlayer": "新增球員",
+        "playerName": "球員名稱",
+        "newPlayerNamePlaceholder": "輸入球員名稱",
+        "status": {
+            "playing": "場上比賽中",
+            "waiting": "等待中",
+            "standby": "待命中"
+        }
+    },
+    "common": {
+        "cancel": "取消",
+        "confirm": "確認"
+    }
+}

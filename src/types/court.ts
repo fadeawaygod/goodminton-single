@@ -1,10 +1,17 @@
 // 球員基本資訊
+export type Gender = 'male' | 'female' | 'unknown';
+
 export interface Player {
   id: string;
   name: string;
+  gender: Gender;
+  level: number;
+  labels: string[];
+  enabled: boolean;
   isPlaying: boolean;
   isQueuing: boolean;
-  enabled: boolean;
+  lastEnabledTime?: Date;
+  gameCount: number;
 }
 
 // 一個場地的狀態

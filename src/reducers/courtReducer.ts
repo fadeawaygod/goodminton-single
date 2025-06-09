@@ -31,7 +31,8 @@ type CourtAction =
   | { type: "AUTO_ASSIGN"; newState: CourtSystemState }
   | { type: "MOVE_TO_STANDBY"; players: Player[] }
   | { type: "DISABLE_PLAYER"; playerId: string }
-  | { type: "ENABLE_PLAYER"; player: Player };
+  | { type: "ENABLE_PLAYER"; player: Player }
+  | { type: "ADD_PLAYER"; player: Player };
 
 export const courtReducer = (state: CourtSystemState, action: CourtAction): CourtSystemState => {
   switch (action.type) {
@@ -390,6 +391,13 @@ export const courtReducer = (state: CourtSystemState, action: CourtAction): Cour
       return {
         ...state,
         standbyPlayers: [...state.standbyPlayers, updatedPlayer]
+      };
+    }
+
+    case "ADD_PLAYER": {
+      return {
+        ...state,
+        standbyPlayers: [...state.standbyPlayers, { ...action.player, isPlaying: false, isQueuing: false }]
       };
     }
 

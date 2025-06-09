@@ -84,5 +84,30 @@
         "required": "此欄位為必填",
         "phoneFormat": "請輸入有效的電話號碼",
         "emailFormat": "請輸入有效的電子郵件地址"
+    },
+    "playerList": {
+        "title": "球員列表",
+        "addPlayer": "新增球員",
+        "addNewPlayer": "新增球員",
+        "playerName": "球員名稱",
+        "gender": "性別",
+        "genders": {
+            "male": "男",
+            "female": "女",
+            "unknown": "不指定"
+        },
+        "level": "等級",
+        "levelHelp": "1為初學者，14為頂尖選手",
+        "labels": "標籤",
+        "addLabel": "新增標籤",
+        "add": "新增",
+        "status": {
+            "playing": "場上比賽中",
+            "waiting": "等待中",
+            "standby": "待命中"
+        },
+        "errors": {
+            "nameExists": "此球員名稱已存在"
+        }
     }
 }
