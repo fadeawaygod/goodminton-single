@@ -1,0 +1,77 @@
+{
+    "common": {
+        "home": "Home",
+        "schedule": "Schedule",
+        "players": "Players",
+        "settings": "Settings",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save"
+    },
+    "header": {
+        "title": "Badminton All-in-One",
+        "home": "Home",
+        "courts": "Courts"
+    },
+    "home": {
+        "welcome": "Welcome to Badminton All-in-One",
+        "description": "Your ultimate badminton court scheduling system"
+    },
+    "schedule": {
+        "createMatch": "Create Match",
+        "viewSchedule": "View Schedule",
+        "courtNumber": "Court Number",
+        "timeSlot": "Time Slot",
+        "players": "Players"
+    },
+    "players": {
+        "addPlayer": "Add Player",
+        "playerList": "Player List",
+        "name": "Name",
+        "level": "Level",
+        "actions": "Actions"
+    },
+    "settings": {
+        "title": "System Settings",
+        "language": "Language",
+        "theme": "Theme",
+        "notifications": "Notifications",
+        "save": "Save",
+        "courtCount": "Number of Courts",
+        "maxCourtsInfo": "Maximum number of courts is {{max}}",
+        "presets": "Quick Select",
+        "saveSuccess": "Settings saved successfully",
+        "courtSettings": "Court Settings",
+        "autoAssignDescription": "When enabled, groups of 4 will be automatically assigned to available courts.",
+        "currentCourts": "Current number of courts: {{count}}",
+        "autoAssign": "Auto Assign Courts"
+    },
+    "court": {
+        "courts": "Courts",
+        "number": "Court {{number}}",
+        "waitingQueue": "Waiting Queue",
+        "standbyArea": "Standby Area",
+        "group": "Group",
+        "playing": "Playing",
+        "selectedPlayers": "Selected Players",
+        "groupCreated": "Successfully created group and added to queue",
+        "maxPlayersSelected": "Maximum number of players (4) already selected",
+        "groupMovedToCourt": "Group moved to Court {{court}}",
+        "finishGame": "End Game",
+        "dropHere": "Drop player here",
+        "spotsLeft": "spots left",
+        "dropToCreateGroup": "Drop here to create new group",
+        "newGroupCreated": "New group created",
+        "autoAssign": "Auto Assign",
+        "autoAssignEnabled": "Auto assign enabled",
+        "autoAssignDisabled": "Auto assign disabled",
+        "playerAlreadyInGroup": "This player is already in the group.",
+        "playerAlreadyInCourt": "This player is already on the court.",
+        "ttsCallToCourt": "{{names}} please go to court {{number}}."
+    },
+    "validation": {
+        "required": "This field is required",
+        "phoneFormat": "Please enter a valid phone number",
+        "emailFormat": "Please enter a valid email address"
+    }
+}

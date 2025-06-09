@@ -1,0 +1,77 @@
+{
+    "common": {
+        "home": "首頁",
+        "schedule": "賽程",
+        "players": "球員",
+        "settings": "設定",
+        "cancel": "取消",
+        "create": "建立",
+        "save": "儲存"
+    },
+    "header": {
+        "title": "羽球一站式系統",
+        "home": "首頁",
+        "courts": "場地"
+    },
+    "home": {
+        "welcome": "歡迎使用羽球一站式系統",
+        "description": "您的終極羽球場地排程系統"
+    },
+    "schedule": {
+        "createMatch": "創建比賽",
+        "viewSchedule": "查看賽程",
+        "courtNumber": "場地編號",
+        "timeSlot": "時段",
+        "players": "球員"
+    },
+    "players": {
+        "addPlayer": "新增球員",
+        "playerList": "球員列表",
+        "name": "姓名",
+        "level": "等級",
+        "actions": "操作"
+    },
+    "settings": {
+        "title": "系統設定",
+        "language": "語言",
+        "theme": "主題",
+        "notifications": "通知",
+        "save": "儲存",
+        "courtCount": "場地數量",
+        "maxCourtsInfo": "最大場地數量為 {{max}} 個",
+        "presets": "快速選擇",
+        "saveSuccess": "設定已儲存",
+        "courtSettings": "場地設定",
+        "autoAssignDescription": "啟用後，滿4人的隊伍會自動分配到空場地。",
+        "currentCourts": "目前場地數：{{count}}",
+        "autoAssign": "自動分配場地"
+    },
+    "court": {
+        "courts": "場地",
+        "number": "場地 {{number}}",
+        "waitingQueue": "排隊區",
+        "standbyArea": "待命區",
+        "group": "組別",
+        "playing": "比賽中",
+        "selectedPlayers": "已選擇球員",
+        "groupCreated": "已成功組隊並加入排隊區",
+        "maxPlayersSelected": "已達到最大選擇人數（4人）",
+        "groupMovedToCourt": "組別已移至場地 {{court}}",
+        "finishGame": "結束比賽",
+        "dropHere": "拖放球員至此",
+        "spotsLeft": "個空位",
+        "dropToCreateGroup": "拖放至此創建新組別",
+        "newGroupCreated": "已創建新組別",
+        "autoAssign": "自動上場",
+        "autoAssignEnabled": "已開啟自動上場",
+        "autoAssignDisabled": "已關閉自動上場",
+        "playerAlreadyInGroup": "該球員已在此隊伍中，無法重複加入。",
+        "playerAlreadyInCourt": "該球員已在此場地，無法重複加入。",
+        "ttsCallToCourt": "請{{names}}到{{number}}號場地上場"
+    },
+    "validation": {
+        "required": "此欄位為必填",
+        "phoneFormat": "請輸入有效的電話號碼",
+        "emailFormat": "請輸入有效的電子郵件地址"
+    }
+}

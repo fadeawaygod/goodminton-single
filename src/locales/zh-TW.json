@@ -1,0 +1,61 @@
+{
+    "app": {
+        "title": "羽球排點系統"
+    },
+    "header": {
+        "title": "羽球排點系統",
+        "home": "首頁",
+        "schedule": "時間表",
+        "players": "球員",
+        "settings": "設定"
+    },
+    "common": {
+        "schedule": "時間表",
+        "players": "球員",
+        "settings": "設定",
+        "save": "儲存",
+        "cancel": "取消"
+    },
+    "court": {
+        "group": "隊伍",
+        "playing": "比賽中",
+        "number": "場地 {{number}}",
+        "finishGame": "結束比賽",
+        "dropToCreateGroup": "拖放至此以創建新隊伍",
+        "standbyArea": "待命區",
+        "waitingQueue": "等待隊伍",
+        "autoAssign": "自動上場",
+        "maxPlayersSelected": "已達到最大人數",
+        "groupMovedToCourt": "隊伍已移動到場地 {{court}}",
+        "groupMovedToQueue": "隊伍已移動到等待區",
+        "groupDissolved": "隊伍已解散",
+        "autoAssignDisabled": "自動上場已停用",
+        "autoAssignEnabled": "自動上場已啟用",
+        "playerAddedToCourt": "球員已加入場地",
+        "newGroupCreated": "新隊伍已創建",
+        "courts": "場地",
+        "selectedPlayers": "已選擇球員",
+        "dropHere": "拖放球員至此",
+        "spotsLeft": "個空位",
+        "gameFinished": "比賽已結束",
+        "ttsCallToCourt": "請{{names}}到{{number}}號場地上場"
+    },
+    "schedule": {
+        "viewSchedule": "查看時間表"
+    },
+    "players": {
+        "playerList": "球員列表"
+    },
+    "settings": {
+        "language": "語言設定",
+        "courtSettings": "場地設定",
+        "courtCount": "場地數量",
+        "autoAssign": "自動上場",
+        "autoAssignDescription": "當有足夠的球員時，自動將等待隊伍中的球員分配到空場地",
+        "openSettings": "開啟設定"
+    },
+    "home": {
+        "welcome": "歡迎使用羽球排點系統",
+        "description": "輕鬆管理場地、球員和比賽"
+    }
+}

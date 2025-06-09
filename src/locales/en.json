@@ -1,0 +1,53 @@
+{
+    "app": {
+        "title": "Badminton Court Management"
+    },
+    "header": {
+        "title": "Badminton Court Management",
+        "home": "Home",
+        "schedule": "Schedule",
+        "players": "Players",
+        "settings": "Settings"
+    },
+    "common": {
+        "schedule": "Schedule",
+        "players": "Players",
+        "settings": "Settings"
+    },
+    "court": {
+        "group": "Group",
+        "playing": "Playing",
+        "number": "Court {{number}}",
+        "finishGame": "Finish Game",
+        "dropToCreateGroup": "Drop here to create new group",
+        "standbyArea": "Standby Area",
+        "waitingQueue": "Waiting Queue",
+        "autoAssign": "Auto Assign",
+        "maxPlayersSelected": "This group is full",
+        "groupMovedToCourt": "Group moved to court {{court}}",
+        "groupMovedToQueue": "Group moved to waiting queue",
+        "groupDissolved": "Group dissolved",
+        "autoAssignDisabled": "Auto assign disabled",
+        "autoAssignEnabled": "Auto assign enabled",
+        "playerAddedToCourt": "Player added to court",
+        "newGroupCreated": "New group created",
+        "courts": "Courts",
+        "selectedPlayers": "Selected Players",
+        "dropHere": "Drop player here",
+        "spotsLeft": "spots left",
+        "ttsCallToCourt": "{{names}} go to court {{number}} please."
+    },
+    "schedule": {
+        "viewSchedule": "View Schedule"
+    },
+    "players": {
+        "playerList": "Player List"
+    },
+    "settings": {
+        "language": "Language Settings"
+    },
+    "home": {
+        "welcome": "Welcome to Badminton Court Management",
+        "description": "Easily manage courts, players and matches"
+    }
+}
