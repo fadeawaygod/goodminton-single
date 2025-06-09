@@ -720,7 +720,9 @@ const CourtSystem: React.FC = () => {
         setCourtCount,
         finishGame: contextFinishGame,
         movePlayersToStandby,
-        courtCount
+        courtCount,
+        allPlayers,
+        togglePlayerEnabled
     } = useCourtSystem();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
@@ -1230,32 +1232,16 @@ const CourtSystem: React.FC = () => {
         });
     };
 
-    // 獲取所有球員列表，並確保每個球員都有 enabled 屬性
+    // 獲取所有球員列表
     const getAllPlayers = () => {
-        const courtPlayers = courts.flatMap(court => court.players.map(p => ({
+        const courtPlayers = courts.flatMap(court => court.players);
+        const queuePlayers = waitingQueue.flatMap(group => group.players);
+        const allPlayers = [...courtPlayers, ...queuePlayers, ...standbyPlayers];
+        // 去重並設置 enabled 狀態
+        return Array.from(new Map(allPlayers.map(p => [p.id, {
             ...p,
-            enabled: true, // 在場地上的球員一定是啟用的
-            isPlaying: true
-        })));
-
-        const queuePlayers = waitingQueue.flatMap(group => group.players.map(p => ({
-            ...p,
-            enabled: true, // 在等待區的球員一定是啟用的
-            isQueuing: true
-        })));
-
-        const standbyWithEnabled = standbyPlayers.map(p => ({
-            ...p,
-            enabled: true, // 在待命區的球員一定是啟用的
-            isPlaying: false,
-            isQueuing: false
-        }));
-
-        // 合併所有球員並去重
-        const allPlayers = [...courtPlayers, ...queuePlayers, ...standbyWithEnabled];
-        const uniquePlayers = Array.from(new Map(allPlayers.map(p => [p.id, p])).values());
-
-        return uniquePlayers;
+            enabled: true // 如果球員在任何列表中，就代表是啟用的
+        }])).values());
     };
 
     // 處理球員啟用/禁用
@@ -1381,8 +1367,8 @@ const CourtSystem: React.FC = () => {
             <PlayerListDialog
                 open={playerListOpen}
                 onClose={() => setPlayerListOpen(false)}
-                players={getAllPlayers()}
-                onTogglePlayer={handleTogglePlayer}
+                players={allPlayers}
+                onTogglePlayer={togglePlayerEnabled}
             />
             <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Grid container spacing={3}>

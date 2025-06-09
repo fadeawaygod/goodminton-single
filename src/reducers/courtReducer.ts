@@ -29,7 +29,9 @@ type CourtAction =
   | { type: "UPDATE_COURT_COUNT"; count: number }
   | { type: "UPDATE_MAX_COURTS"; count: number }
   | { type: "AUTO_ASSIGN"; newState: CourtSystemState }
-  | { type: "MOVE_TO_STANDBY"; players: Player[] };
+  | { type: "MOVE_TO_STANDBY"; players: Player[] }
+  | { type: "DISABLE_PLAYER"; playerId: string }
+  | { type: "ENABLE_PLAYER"; player: Player };
 
 export const courtReducer = (state: CourtSystemState, action: CourtAction): CourtSystemState => {
   switch (action.type) {
@@ -349,6 +351,45 @@ export const courtReducer = (state: CourtSystemState, action: CourtAction): Cour
       return {
         ...state,
         standbyPlayers: updatedStandbyPlayers,
+      };
+    }
+
+    case "DISABLE_PLAYER": {
+      // 從所有區域移除該球員
+      const updatedCourts = state.courts.map(court => ({
+        ...court,
+        players: court.players.filter(p => p.id !== action.playerId),
+        isActive: court.players.filter(p => p.id !== action.playerId).length === 4
+      }));
+
+      const updatedWaitingQueue = state.waitingQueue
+        .map(group => ({
+          ...group,
+          players: group.players.filter(p => p.id !== action.playerId)
+        }))
+        .filter(group => group.players.length > 0);
+
+      const updatedStandbyPlayers = state.standbyPlayers.filter(p => p.id !== action.playerId);
+
+      return {
+        ...state,
+        courts: updatedCourts,
+        waitingQueue: updatedWaitingQueue,
+        standbyPlayers: updatedStandbyPlayers
+      };
+    }
+
+    case "ENABLE_PLAYER": {
+      // 將球員添加到待命區
+      const updatedPlayer = {
+        ...action.player,
+        isPlaying: false,
+        isQueuing: false
+      };
+
+      return {
+        ...state,
+        standbyPlayers: [...state.standbyPlayers, updatedPlayer]
       };
     }
 

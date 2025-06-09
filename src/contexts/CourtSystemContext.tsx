@@ -12,8 +12,10 @@ interface CourtSystemContextType {
     courts: CourtType[];
     waitingQueue: PlayerGroup[];
     standbyPlayers: Player[];
+    allPlayers: Player[];
     finishGame: (courtId: string) => void;
     movePlayersToStandby: (players: Player[]) => void;
+    togglePlayerEnabled: (playerId: string) => void;
 }
 
 const CourtSystemContext = createContext<CourtSystemContextType | undefined>(undefined);
@@ -21,35 +23,60 @@ const CourtSystemContext = createContext<CourtSystemContextType | undefined>(und
 const INIT_COURTS = 4;
 
 export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // 使用測試數據初始化
-    const [state, courtDispatch] = useReducer(courtReducer, INIT_COURTS, (initialCount) =>
+    const [state, dispatch] = useReducer(courtReducer, INIT_COURTS, (initialCount) =>
         createInitialState(initialCount, generateTestPlayers())
     );
+    const [allPlayers, setAllPlayers] = React.useState<Player[]>(generateTestPlayers());
 
-    // 自動分配場地的效果
     useEffect(() => {
         if (state.autoAssign) {
             const newState = checkAndAssignCourt(state);
             if (newState) {
-                courtDispatch({ type: 'AUTO_ASSIGN', newState });
+                dispatch({ type: 'AUTO_ASSIGN', newState });
             }
         }
     }, [state]);
 
+    useEffect(() => {
+        const courtPlayers = state.courts.flatMap(court => court.players);
+        const queuePlayers = state.waitingQueue.flatMap(group => group.players);
+        const activePlayerIds = new Set([
+            ...courtPlayers.map(p => p.id),
+            ...queuePlayers.map(p => p.id),
+            ...state.standbyPlayers.map(p => p.id)
+        ]);
+
+        setAllPlayers(prev => prev.map(player => ({
+            ...player,
+            enabled: activePlayerIds.has(player.id)
+        })));
+    }, [state.courts, state.waitingQueue, state.standbyPlayers]);
+
     const setCourtCount = (count: number) => {
-        courtDispatch({ type: 'UPDATE_COURT_COUNT', count });
+        dispatch({ type: 'UPDATE_COURT_COUNT', count });
     };
 
     const toggleAutoAssign = () => {
-        courtDispatch({ type: 'TOGGLE_AUTO_ASSIGN' });
+        dispatch({ type: 'TOGGLE_AUTO_ASSIGN' });
     };
 
     const finishGame = (courtId: string) => {
-        courtDispatch({ type: 'FINISH_GAME', courtId });
+        dispatch({ type: 'FINISH_GAME', courtId });
     };
 
     const movePlayersToStandby = (players: Player[]) => {
-        courtDispatch({ type: 'MOVE_TO_STANDBY', players });
+        dispatch({ type: 'MOVE_TO_STANDBY', players });
+    };
+
+    const togglePlayerEnabled = (playerId: string) => {
+        const player = allPlayers.find(p => p.id === playerId);
+        if (!player) return;
+
+        if (player.enabled) {
+            dispatch({ type: 'DISABLE_PLAYER', playerId });
+        } else {
+            dispatch({ type: 'ENABLE_PLAYER', player });
+        }
     };
 
     return (
@@ -61,8 +88,10 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
             courts: state.courts,
             waitingQueue: state.waitingQueue,
             standbyPlayers: state.standbyPlayers,
+            allPlayers,
             finishGame,
             movePlayersToStandby,
+            togglePlayerEnabled,
         }}>
             {children}
         </CourtSystemContext.Provider>
