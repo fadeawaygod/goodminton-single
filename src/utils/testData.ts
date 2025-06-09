@@ -5,10 +5,14 @@ import { Gender } from '../types/court';
 // 生成測試球員數據
 export const generateTestPlayers = (): Player[] => {
     const names = [
-        '張三', '李四', '王五', '趙六', '孫七', '周八', '吳九', '鄭十',
-        '劉備', '關羽', '張飛', '諸葛亮', '曹操', '孫權', '周瑜', '黃蓋',
-        '馬超', '趙雲', '黃忠', '魏延', '龐統', '徐晃', '許褚', '典韋',
-        'John', 'Mary', 'Tom', 'Jerry', 'Mike', 'Sarah', 'David', 'Linda'
+        '王大明',
+        '李小華',
+        '張三豐',
+        '陳小美',
+        '林大山',
+        '吳小雲',
+        '黃小龍',
+        '劉大寶'
     ];
 
     return names.map(name => ({
@@ -20,6 +24,6 @@ export const generateTestPlayers = (): Player[] => {
         isPlaying: false,
         isQueuing: false,
         enabled: true,
-        gameCount: 0
+        gamesPlayed: 0
     }));
 }; 

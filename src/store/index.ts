@@ -1,26 +1,40 @@
 import { configureStore } from '@reduxjs/toolkit';
-import playerReducer from './playerSlice';
+import playerReducer, { PlayerState } from './playerSlice';
+
+const loadPlayersFromStorage = (): PlayerState => {
+    try {
+        const storedPlayers = localStorage.getItem('goodminton_players');
+        if (storedPlayers) {
+            const players = JSON.parse(storedPlayers);
+            return {
+                players: players.map((p: any) => ({
+                    ...p,
+                    lastGameEndTime: p.lastGameEndTime ? new Date(p.lastGameEndTime) : undefined
+                }))
+            };
+        }
+    } catch (e) {
+        console.error('Failed to load players from localStorage:', e);
+    }
+    return { players: [] };
+};
 
 export const store = configureStore({
     reducer: {
-        players: playerReducer,
+        players: playerReducer
     },
-    middleware: (getDefaultMiddleware: any) =>
-        getDefaultMiddleware({
-            serializableCheck: false // 完全禁用序列化檢查
-        })
+    preloadedState: {
+        players: loadPlayersFromStorage()
+    }
+});
+
+// Save to localStorage whenever the state changes
+store.subscribe(() => {
+    const state = store.getState();
+    localStorage.setItem('goodminton_players', JSON.stringify(state.players.players));
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-
-// 自動保存到 localStorage
-store.subscribe(() => {
-    const state = store.getState();
-    if (state.players.lastSaved > (window as any).lastSaved || !(window as any).lastSaved) {
-        localStorage.setItem('goodminton_players', JSON.stringify(state.players.players));
-        (window as any).lastSaved = state.players.lastSaved;
-    }
-});
 
 export default store; 

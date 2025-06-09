@@ -5,13 +5,12 @@ import {
     DialogContent,
     DialogActions,
     Button,
+    Slider,
     Typography,
-    Box,
-    Slider
+    Box
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useCourtSystem } from '../contexts/CourtSystemContext';
-const MAX_COURTS = 12;
 
 interface CourtSettingsDialogProps {
     open: boolean;
@@ -23,12 +22,14 @@ const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose
     const { courtCount, setCourtCount } = useCourtSystem();
     const [localCourtCount, setLocalCourtCount] = React.useState(courtCount);
 
-    // 當對話框打開時重置本地狀態
+    // Reset local state when dialog opens
     React.useEffect(() => {
-        if (open) {
-            setLocalCourtCount(courtCount);
-        }
+        setLocalCourtCount(courtCount);
     }, [open, courtCount]);
+
+    const handleSliderChange = (_event: Event, newValue: number | number[]) => {
+        setLocalCourtCount(newValue as number);
+    };
 
     const handleSave = () => {
         setCourtCount(localCourtCount);
@@ -36,55 +37,29 @@ const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose
     };
 
     return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 2,
-                    boxShadow: 3,
-                }
-            }}
-        >
-            <DialogTitle sx={{
-                borderBottom: 1,
-                borderColor: 'divider',
-                pb: 2
-            }}>
-                {t('settings.courtSettings')}
-            </DialogTitle>
+        <Dialog open={open} onClose={onClose}>
+            <DialogTitle>{t('courtSettings.title')}</DialogTitle>
             <DialogContent>
-                <Box sx={{ my: 3 }}>
-                    <Typography gutterBottom variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                        {t('settings.courtCount')}
+                <Box sx={{ width: 300, mt: 2 }}>
+                    <Typography gutterBottom>
+                        {t('courtSettings.courtCount')}
                     </Typography>
                     <Slider
                         value={localCourtCount}
-                        onChange={(_, value) => setLocalCourtCount(value as number)}
+                        onChange={handleSliderChange}
                         min={1}
-                        max={MAX_COURTS}
+                        max={8}
                         marks
                         step={1}
                         valueLabelDisplay="auto"
-                        sx={{ mt: 2 }}
                     />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        {t('settings.currentCourts', { count: localCourtCount })}
-                    </Typography>
                 </Box>
             </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
+            <DialogActions>
                 <Button onClick={onClose} color="inherit">
                     {t('common.cancel')}
                 </Button>
-                <Button
-                    onClick={handleSave}
-                    variant="contained"
-                    color="primary"
-                    sx={{ minWidth: 100 }}
-                >
+                <Button onClick={handleSave} color="primary" variant="contained">
                     {t('common.save')}
                 </Button>
             </DialogActions>

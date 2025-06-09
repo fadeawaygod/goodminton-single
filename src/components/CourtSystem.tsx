@@ -27,7 +27,8 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { MultiBackend, TouchTransition, Preview } from 'react-dnd-multi-backend';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import { Player, PlayerGroup } from '../types/court';
+import type { Court } from '../types/court';
+import { CourtType, Player, PlayerGroup, CourtSystemState } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
 import { useCourtSystem } from '../contexts/CourtSystemContext';
 import CourtSettingsDialog from './CourtSettingsDialog';
@@ -88,23 +89,6 @@ const DragPreview: React.FC<DragPreviewProps> = ({ item, style }) => {
         </div>
     );
 };
-
-// 定義場地類型
-interface CourtType {
-    id: string;
-    number: number;
-    players: Player[];
-    isActive: boolean;
-    startTime?: Date;
-}
-
-// 定義系統狀態類型
-interface CourtSystemState {
-    courts: CourtType[];
-    waitingQueue: PlayerGroup[];
-    standbyPlayers: Player[];
-    autoAssign: boolean;
-}
 
 // 定義卡馬龍色系
 const chameleonColors = {
@@ -653,7 +637,7 @@ const StandbyArea: React.FC<{
     );
 };
 
-const CourtSystem: React.FC = () => {
+export const CourtSystem: React.FC = () => {
     const { t, i18n } = useTranslation();
     const {
         courts,
@@ -665,14 +649,25 @@ const CourtSystem: React.FC = () => {
         movePlayersToStandby,
         courtCount,
         allPlayers,
+        players
     } = useCourtSystem();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
     const [isPlayerListOpen, setIsPlayerListOpen] = useState(false);
 
+    // Convert Court[] to CourtType[]
+    const convertCourts = (courts: Court[]): CourtType[] => {
+        return courts.map(court => ({
+            ...court,
+            players: court.players
+                .map((playerId: string) => players.find(p => p.id === playerId))
+                .filter((p): p is Player => p !== undefined)
+        }));
+    };
+
     // 初始狀態
     const [systemState, setSystemState] = useState<CourtSystemState>({
-        courts: courts,
+        courts: convertCourts(courts),
         waitingQueue: waitingQueue,
         standbyPlayers: standbyPlayers,
         autoAssign: autoAssign,
@@ -682,12 +677,12 @@ const CourtSystem: React.FC = () => {
     useEffect(() => {
         setSystemState(prev => ({
             ...prev,
-            courts: courts,
+            courts: convertCourts(courts),
             waitingQueue: waitingQueue,
             standbyPlayers: standbyPlayers,
             autoAssign: autoAssign,
         }));
-    }, [courts, waitingQueue, autoAssign, standbyPlayers]);
+    }, [courts, waitingQueue, autoAssign, standbyPlayers, players]);
 
     // 確保場地數量與 Redux 中的設定同步
     useEffect(() => {

@@ -4,186 +4,149 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    TextField,
     Button,
+    TextField,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    Chip,
     Box,
-    FormHelperText,
+    Chip,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useCourtSystem } from '../contexts/CourtSystemContext';
 import { Gender } from '../types/court';
+import { useAppDispatch } from '../store/hooks';
+import { addPlayer } from '../store/playerSlice';
 
 interface AddPlayerDialogProps {
     open: boolean;
     onClose: () => void;
 }
 
-const LEVEL_RANGE = Array.from({ length: 14 }, (_, i) => i + 1);
-
 export const AddPlayerDialog: React.FC<AddPlayerDialogProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
-    const { addPlayer, allPlayers } = useCourtSystem();
-    const [formData, setFormData] = useState({
+    const dispatch = useAppDispatch();
+
+    const [newPlayer, setNewPlayer] = useState({
         name: '',
         gender: 'unknown' as Gender,
-        level: 7,
+        level: 3,
         labels: [] as string[],
     });
-    const [customLabel, setCustomLabel] = useState('');
-    const [error, setError] = useState<string | null>(null);
+    const [newLabel, setNewLabel] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // 檢查名稱是否已存在
-        if (allPlayers.some(p => p.name === formData.name.trim())) {
-            setError(t('playerList.errors.nameExists'));
-            return;
+    const handleAddPlayer = () => {
+        if (newPlayer.name.trim()) {
+            dispatch(addPlayer(newPlayer));
+            setNewPlayer({
+                name: '',
+                gender: 'unknown',
+                level: 3,
+                labels: [],
+            });
+            onClose();
         }
-
-        addPlayer({
-            ...formData,
-            name: formData.name.trim(),
-        });
-        handleClose();
-    };
-
-    const handleClose = () => {
-        setFormData({
-            name: '',
-            gender: 'unknown',
-            level: 7,
-            labels: [],
-        });
-        setCustomLabel('');
-        setError(null);
-        onClose();
     };
 
     const handleAddLabel = () => {
-        if (customLabel.trim() && !formData.labels.includes(customLabel.trim())) {
-            setFormData(prev => ({
+        if (newLabel.trim() && !newPlayer.labels.includes(newLabel.trim())) {
+            setNewPlayer(prev => ({
                 ...prev,
-                labels: [...prev.labels, customLabel.trim()]
+                labels: [...prev.labels, newLabel.trim()],
             }));
-            setCustomLabel('');
+            setNewLabel('');
         }
     };
 
     const handleRemoveLabel = (labelToRemove: string) => {
-        setFormData(prev => ({
+        setNewPlayer(prev => ({
             ...prev,
-            labels: prev.labels.filter(label => label !== labelToRemove)
+            labels: prev.labels.filter(label => label !== labelToRemove),
         }));
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>{t('playerList.addNewPlayer')}</DialogTitle>
-            <form onSubmit={handleSubmit}>
-                <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <DialogContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+                    <TextField
+                        label={t('playerList.name')}
+                        value={newPlayer.name}
+                        onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
+                        fullWidth
+                    />
+                    <FormControl fullWidth>
+                        <InputLabel>{t('playerList.gender')}</InputLabel>
+                        <Select
+                            value={newPlayer.gender}
+                            label={t('playerList.gender')}
+                            onChange={(e) => setNewPlayer(prev => ({ ...prev, gender: e.target.value as Gender }))}
+                        >
+                            <MenuItem value="male">{t('playerList.male')}</MenuItem>
+                            <MenuItem value="female">{t('playerList.female')}</MenuItem>
+                            <MenuItem value="unknown">{t('playerList.unknown')}</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth>
+                        <InputLabel>{t('playerList.level')}</InputLabel>
+                        <Select
+                            value={newPlayer.level}
+                            label={t('playerList.level')}
+                            onChange={(e) => setNewPlayer(prev => ({ ...prev, level: Number(e.target.value) }))}
+                        >
+                            {[1, 2, 3, 4, 5].map(level => (
+                                <MenuItem key={level} value={level}>
+                                    {level}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
                         <TextField
-                            autoFocus
+                            label={t('playerList.labels')}
+                            value={newLabel}
+                            onChange={(e) => setNewLabel(e.target.value)}
                             fullWidth
-                            value={formData.name}
-                            onChange={(e) => {
-                                setFormData(prev => ({ ...prev, name: e.target.value }));
-                                setError(null);
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddLabel();
+                                }
                             }}
-                            label={t('playerList.playerName')}
-                            error={!!error}
-                            helperText={error}
-                            required
                         />
-
-                        <FormControl fullWidth>
-                            <InputLabel>{t('playerList.gender')}</InputLabel>
-                            <Select
-                                value={formData.gender}
-                                onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value as Gender }))}
-                                label={t('playerList.gender')}
-                            >
-                                <MenuItem value="male">{t('playerList.genders.male')}</MenuItem>
-                                <MenuItem value="female">{t('playerList.genders.female')}</MenuItem>
-                                <MenuItem value="unknown">{t('playerList.genders.unknown')}</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <FormControl fullWidth>
-                            <InputLabel>{t('playerList.level')}</InputLabel>
-                            <Select
-                                value={formData.level}
-                                onChange={(e) => setFormData(prev => ({ ...prev, level: e.target.value as number }))}
-                                label={t('playerList.level')}
-                            >
-                                {LEVEL_RANGE.map(level => (
-                                    <MenuItem key={level} value={level}>
-                                        {level}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                            <FormHelperText>{t('playerList.levelHelp')}</FormHelperText>
-                        </FormControl>
-
-                        <Box>
-                            <Box sx={{ mb: 1 }}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    value={customLabel}
-                                    onChange={(e) => setCustomLabel(e.target.value)}
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleAddLabel();
-                                        }
-                                    }}
-                                    placeholder={t('playerList.addLabel')}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <Button
-                                                onClick={handleAddLabel}
-                                                disabled={!customLabel.trim()}
-                                                size="small"
-                                            >
-                                                {t('playerList.add')}
-                                            </Button>
-                                        ),
-                                    }}
-                                />
-                            </Box>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                {formData.labels.map((label) => (
-                                    <Chip
-                                        key={label}
-                                        label={label}
-                                        onDelete={() => handleRemoveLabel(label)}
-                                        size="small"
-                                    />
-                                ))}
-                            </Box>
-                        </Box>
+                        <Button
+                            variant="outlined"
+                            onClick={handleAddLabel}
+                            disabled={!newLabel.trim()}
+                        >
+                            {t('playerList.addLabel')}
+                        </Button>
                     </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>
-                        {t('common.cancel')}
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={!formData.name.trim()}
-                    >
-                        {t('common.confirm')}
-                    </Button>
-                </DialogActions>
-            </form>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {newPlayer.labels.map(label => (
+                            <Chip
+                                key={label}
+                                label={label}
+                                onDelete={() => handleRemoveLabel(label)}
+                            />
+                        ))}
+                    </Box>
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose} color="inherit">
+                    {t('common.cancel')}
+                </Button>
+                <Button
+                    onClick={handleAddPlayer}
+                    color="primary"
+                    variant="contained"
+                    disabled={!newPlayer.name.trim()}
+                >
+                    {t('playerList.add')}
+                </Button>
+            </DialogActions>
         </Dialog>
     );
 }; 

@@ -10,32 +10,37 @@ export interface Player {
   enabled: boolean;
   isPlaying: boolean;
   isQueuing: boolean;
-  lastEnabledTime?: Date;
-  gameCount: number;
+  gamesPlayed: number;
+  lastGameEndTime?: Date;
 }
 
-// 一個場地的狀態
-export interface CourtType {
+export interface Court {
   id: string;
-  number: number; // 場地編號
-  players: Player[]; // 當前在場的球員，固定4人
-  startTime?: Date; // 開始時間
-  isActive: boolean; // 是否正在使用
+  name: string;
+  number: number;
+  players: string[];
+  maxPlayers: number;
+  enabled: boolean;
+  isActive: boolean;
 }
+
+export type CourtType = Omit<Court, 'players'> & {
+  players: Player[];
+};
 
 // 一組要上場的球員（4人一組）
 export interface PlayerGroup {
   id: string;
-  players: Player[]; // 固定4人
-  createdAt: Date; // 創建時間，用於排序
+  players: Player[];
+  createdAt: Date;
 }
 
 // 整個排點系統的狀態
 export interface CourtSystemState {
-  courts: CourtType[]; // 所有場地
-  waitingQueue: PlayerGroup[]; // 排隊區（4人一組）
-  standbyPlayers: Player[]; // 待命區（單人）
-  autoAssign: boolean; // 是否自動上場
+  courts: CourtType[];
+  waitingQueue: PlayerGroup[];
+  standbyPlayers: Player[];
+  autoAssign: boolean;
 }
 
 export interface DragItem extends Player {

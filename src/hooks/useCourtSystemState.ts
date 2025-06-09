@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Player, PlayerGroup, CourtType, CourtSystemState } from '../types/court';
 import { useCourtSystem } from '../contexts/CourtSystemContext';
@@ -12,15 +12,37 @@ export const useCourtSystemState = (onSnackbarMessage?: (message: string, severi
         setCourtCount,
         finishGame: contextFinishGame,
         movePlayersToStandby,
-        courtCount
+        courtCount,
+        players
     } = useCourtSystem();
 
+    // Convert Court[] to CourtType[]
+    const convertCourts = (): CourtType[] => {
+        return courts.map(court => ({
+            ...court,
+            players: court.players
+                .map(playerId => players.find(p => p.id === playerId))
+                .filter((p): p is NonNullable<typeof p> => p !== undefined)
+        }));
+    };
+
     const [systemState, setSystemState] = useState<CourtSystemState>({
-        courts,
+        courts: convertCourts(),
         waitingQueue,
         standbyPlayers,
         autoAssign,
     });
+
+    // Update system state when dependencies change
+    useEffect(() => {
+        setSystemState(prev => ({
+            ...prev,
+            courts: convertCourts(),
+            waitingQueue,
+            standbyPlayers,
+            autoAssign,
+        }));
+    }, [courts, waitingQueue, autoAssign, standbyPlayers, players]);
 
     const handleFinishGame = useCallback((courtId: string) => {
         const court = systemState.courts.find(c => c.id === courtId);
@@ -357,5 +379,9 @@ export const useCourtSystemState = (onSnackbarMessage?: (message: string, severi
         handleGroupAssign,
         handlePlayingGroupToQueue,
         handleGroupDissolve,
+        courtCount,
+        setCourtCount,
+        finishGame: contextFinishGame,
+        movePlayersToStandby
     };
 }; 

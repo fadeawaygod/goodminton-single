@@ -52,7 +52,7 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player }) => {
         >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Chip
-                    label={`${player.name} ${player.gameCount}`}
+                    label={`${player.name} ${player.gamesPlayed}`}
                     icon={<PersonIcon />}
                     color={player.isPlaying ? "primary" : "default"}
                     sx={{

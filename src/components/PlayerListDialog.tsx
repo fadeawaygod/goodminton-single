@@ -3,27 +3,22 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Box,
-    Chip,
     IconButton,
-    Typography,
+    Button,
     List,
     ListItem,
     ListItemText,
     ListItemSecondaryAction,
-    Switch,
+    Box,
+    Chip,
+    Typography,
+    Tooltip,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useTranslation } from 'react-i18next';
-import { Gender } from '../types/court';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addPlayer, togglePlayerEnabled } from '../store/playerSlice';
+import { deletePlayer, selectAllPlayers } from '../store/playerSlice';
+import { AddPlayerDialog } from './AddPlayerDialog';
 
 interface PlayerListDialogProps {
     open: boolean;
@@ -33,153 +28,80 @@ interface PlayerListDialogProps {
 export const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const players = useAppSelector(state => state.players.players);
+    const players = useAppSelector(selectAllPlayers);
+    const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-    const [newPlayer, setNewPlayer] = useState({
-        name: '',
-        gender: 'unknown' as Gender,
-        level: 3,
-        labels: [] as string[],
-    });
-    const [newLabel, setNewLabel] = useState('');
-
-    const handleAddPlayer = () => {
-        if (newPlayer.name.trim()) {
-            dispatch(addPlayer(newPlayer));
-            setNewPlayer({
-                name: '',
-                gender: 'unknown',
-                level: 3,
-                labels: [],
-            });
-        }
-    };
-
-    const handleToggleEnabled = (playerId: string) => {
-        dispatch(togglePlayerEnabled(playerId));
-    };
-
-    const handleAddLabel = () => {
-        if (newLabel.trim() && !newPlayer.labels.includes(newLabel.trim())) {
-            setNewPlayer(prev => ({
-                ...prev,
-                labels: [...prev.labels, newLabel.trim()],
-            }));
-            setNewLabel('');
-        }
-    };
-
-    const handleRemoveLabel = (labelToRemove: string) => {
-        setNewPlayer(prev => ({
-            ...prev,
-            labels: prev.labels.filter(label => label !== labelToRemove),
-        }));
+    const handleDeletePlayer = (playerId: string) => {
+        dispatch(deletePlayer(playerId));
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{t('playerList.title')}</DialogTitle>
-            <DialogContent>
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                        {t('playerList.addNewPlayer')}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                        <TextField
-                            label={t('playerList.name')}
-                            value={newPlayer.name}
-                            onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
-                            size="small"
-                        />
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                            <InputLabel>{t('playerList.gender')}</InputLabel>
-                            <Select
-                                value={newPlayer.gender}
-                                label={t('playerList.gender')}
-                                onChange={(e) => setNewPlayer(prev => ({ ...prev, gender: e.target.value as Gender }))}
-                            >
-                                <MenuItem value="male">{t('playerList.male')}</MenuItem>
-                                <MenuItem value="female">{t('playerList.female')}</MenuItem>
-                                <MenuItem value="unknown">{t('playerList.unknown')}</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                            <InputLabel>{t('playerList.level')}</InputLabel>
-                            <Select
-                                value={newPlayer.level}
-                                label={t('playerList.level')}
-                                onChange={(e) => setNewPlayer(prev => ({ ...prev, level: Number(e.target.value) }))}
-                            >
-                                {[1, 2, 3, 4, 5].map(level => (
-                                    <MenuItem key={level} value={level}>
-                                        {level}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                        <TextField
-                            label={t('playerList.labels')}
-                            value={newLabel}
-                            onChange={(e) => setNewLabel(e.target.value)}
-                            size="small"
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleAddLabel();
-                                }
-                            }}
-                        />
+        <>
+            <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        {t('playerList.title')}
                         <Button
-                            variant="outlined"
-                            onClick={handleAddLabel}
-                            disabled={!newLabel.trim()}
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setAddDialogOpen(true)}
                         >
-                            {t('playerList.addLabel')}
+                            {t('playerList.addNewPlayer')}
                         </Button>
                     </Box>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {newPlayer.labels.map(label => (
-                            <Chip
-                                key={label}
-                                label={label}
-                                onDelete={() => handleRemoveLabel(label)}
-                                size="small"
-                            />
-                        ))}
-                    </Box>
-                </Box>
-                <List>
-                    {players.map(player => (
-                        <ListItem key={player.id}>
-                            <ListItemText
-                                primary={player.name}
-                                secondary={`${t(`playerList.${player.gender}`)} | ${t('playerList.level')}: ${player.level} | ${player.labels.join(', ')}`}
-                            />
-                            <ListItemSecondaryAction>
-                                <Switch
-                                    edge="end"
-                                    checked={player.enabled}
-                                    onChange={() => handleToggleEnabled(player.id)}
-                                />
-                            </ListItemSecondaryAction>
-                        </ListItem>
-                    ))}
-                </List>
-            </DialogContent>
-            <DialogActions>
-                <Button
-                    onClick={handleAddPlayer}
-                    color="primary"
-                    disabled={!newPlayer.name.trim()}
-                >
-                    {t('playerList.add')}
-                </Button>
-                <Button onClick={onClose} color="primary">
-                    {t('common.close')}
-                </Button>
-            </DialogActions>
-        </Dialog>
+                </DialogTitle>
+                <DialogContent>
+                    {players.length === 0 ? (
+                        <Typography color="textSecondary" align="center" sx={{ py: 2 }}>
+                            {t('playerList.noPlayers')}
+                        </Typography>
+                    ) : (
+                        <List>
+                            {players.map((player) => (
+                                <ListItem key={player.id}>
+                                    <ListItemText
+                                        primary={player.name}
+                                        secondary={
+                                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+                                                <Chip
+                                                    size="small"
+                                                    label={`${t('playerList.level')}: ${player.level}`}
+                                                />
+                                                <Chip
+                                                    size="small"
+                                                    label={t(`playerList.${player.gender}`)}
+                                                />
+                                                {player.labels.map((label) => (
+                                                    <Chip
+                                                        key={label}
+                                                        size="small"
+                                                        label={label}
+                                                    />
+                                                ))}
+                                            </Box>
+                                        }
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Tooltip title={t('common.delete')}>
+                                            <IconButton
+                                                edge="end"
+                                                onClick={() => handleDeletePlayer(player.id)}
+                                                size="small"
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            ))}
+                        </List>
+                    )}
+                </DialogContent>
+            </Dialog>
+            <AddPlayerDialog
+                open={addDialogOpen}
+                onClose={() => setAddDialogOpen(false)}
+            />
+        </>
     );
 }; 
