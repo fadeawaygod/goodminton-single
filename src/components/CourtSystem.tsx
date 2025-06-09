@@ -32,6 +32,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCourtSystem } from '../contexts/CourtSystemContext';
 import CourtSettingsDialog from './CourtSettingsDialog';
 import { PlayerListDialog } from './PlayerListDialog';
+import { DraggablePlayer } from './DraggablePlayer';
 
 // 定義拖拽類型
 const ItemTypes = {
@@ -119,64 +120,6 @@ const chameleonColors = {
         border: '#8FBC8F',     // 暗海綠
         header: '#2E8B57',     // 海藻綠
     }
-};
-
-// 可拖拽的球員組件
-const DraggablePlayer: React.FC<{
-    player: Player;
-}> = ({ player }) => {
-    const [{ isDragging }, dragRef, preview] = useDrag<DragItem, unknown, { isDragging: boolean }>(() => ({
-        type: ItemTypes.PLAYER,
-        item: { ...player, type: ItemTypes.PLAYER },
-        collect: (monitor) => ({
-            isDragging: monitor.isDragging(),
-        }),
-    }), [player]);
-
-    useEffect(() => {
-        preview(getEmptyImage(), { captureDraggingState: true });
-    }, [preview]);
-
-    const elementRef = useCallback(
-        (node: HTMLElement | null) => {
-            if (dragRef) {
-                dragRef(node);
-            }
-        },
-        [dragRef]
-    );
-
-    return (
-        <div
-            ref={elementRef}
-            style={{
-                opacity: isDragging ? 0.5 : 1,
-                cursor: 'move',
-                display: 'inline-block',
-                touchAction: 'none',
-            }}
-        >
-            <Chip
-                label={player.name}
-                icon={<PersonIcon />}
-                color={player.isPlaying ? "primary" : "default"}
-                sx={{
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    MozUserSelect: 'none',
-                    '& .MuiChip-label': {
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                    },
-                    backgroundColor: player.isPlaying ? chameleonColors.primary : chameleonColors.secondary,
-                    color: 'white',
-                    '&:hover': {
-                        backgroundColor: player.isPlaying ? chameleonColors.hover : chameleonColors.primary,
-                    },
-                    transition: 'all 0.3s ease',
-                }}
-            />
-        </div>
-    );
 };
 
 // 可拖拽的隊伍組件
