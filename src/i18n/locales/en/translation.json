@@ -67,7 +67,9 @@
         "autoAssignDisabled": "Auto assign disabled",
         "playerAlreadyInGroup": "This player is already in the group.",
         "playerAlreadyInCourt": "This player is already on the court.",
-        "ttsCallToCourt": "{{names}} please go to court {{number}}."
+        "ttsCallToCourt": "{{names}} please go to court {{number}}.",
+        "gameFinished": "Game finished",
+        "ttsGameFinished": "court {{number}} Game finished"
     },
     "validation": {
         "required": "This field is required",

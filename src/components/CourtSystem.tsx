@@ -825,6 +825,29 @@ const CourtSystem: React.FC = () => {
         // 使用 context 的方法來結束比賽
         finishGame(courtId);
 
+        // 更新本地狀態
+        setSystemState(prevState => {
+            const updatedCourts = prevState.courts.map(c =>
+                c.id === courtId
+                    ? { ...c, players: [], isActive: false, startTime: undefined }
+                    : c
+            );
+
+            const updatedStandbyPlayers = [
+                ...prevState.standbyPlayers,
+                ...court.players.map(p => ({ ...p, isPlaying: false }))
+            ];
+
+            return {
+                ...prevState,
+                courts: updatedCourts,
+                standbyPlayers: updatedStandbyPlayers,
+            };
+        });
+
+        // 播放語音提示
+        playTTS(t('court.ttsGameFinished', { number: court.number }));
+
         // 顯示提示
         setSnackbar({
             open: true,
@@ -1136,7 +1159,6 @@ const CourtSystem: React.FC = () => {
                     : c
             );
             const updatedWaitingQueue = prevState.waitingQueue.filter(g => g.id !== groupId);
-            // TTS 播放上場名單與場地號（分段快取與播放）
             const names = group.players.map(p => p.name);
             playCourtTTS(names, String(court.number));
             setSnackbar({
@@ -1206,7 +1228,6 @@ const CourtSystem: React.FC = () => {
         });
     };
 
-    // 使用瀏覽器 SpeechSynthesis API 取代 Google Cloud/Translate TTS
     function playTTS(text: string, lang: string = 'zh-TW') {
         if (!ttsEnabled) return Promise.resolve();
         return new Promise<void>((resolve, reject) => {
