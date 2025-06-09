@@ -11,6 +11,10 @@ import { CourtSystemProvider } from './contexts/CourtSystemContext';
 import { Provider } from 'react-redux';
 import { store } from './store';
 
+// 判斷是否在 GitHub Pages 環境
+const isGitHubPages = window.location.hostname.includes('github.io');
+const basePath = isGitHubPages ? '/goodminton-single' : '';
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -32,7 +36,7 @@ const App: React.FC = () => {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <CourtSystemProvider>
-            <Router>
+            <Router basename={basePath}>
               <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <Header />
                 <main style={{ flexGrow: 1, padding: '20px 0' }}>
