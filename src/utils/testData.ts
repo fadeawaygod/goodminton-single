@@ -14,6 +14,7 @@ export const generateTestPlayers = (): Player[] => {
         id: uuidv4(),
         name,
         isPlaying: false,
-        isQueuing: false
+        isQueuing: false,
+        enabled: true
     }));
 }; 

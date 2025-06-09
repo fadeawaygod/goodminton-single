@@ -21,6 +21,7 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import PeopleIcon from '@mui/icons-material/People';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -30,6 +31,7 @@ import { Player, PlayerGroup } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
 import { useCourtSystem } from '../contexts/CourtSystemContext';
 import CourtSettingsDialog from './CourtSettingsDialog';
+import PlayerListDialog from './PlayerListDialog';
 
 // 定義拖拽類型
 const ItemTypes = {
@@ -710,19 +712,19 @@ const StandbyArea: React.FC<{
 
 const CourtSystem: React.FC = () => {
     const { t, i18n } = useTranslation();
-    // 不要再從 Redux settings 取 courtCount
     const {
         courts,
         waitingQueue,
         autoAssign,
         standbyPlayers,
         setCourtCount,
-        finishGame,
+        finishGame: contextFinishGame,
         movePlayersToStandby,
-        courtCount // ← 如果 useCourtSystem 有提供 courtCount，這裡直接取用
+        courtCount
     } = useCourtSystem();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
+    const [playerListOpen, setPlayerListOpen] = useState(false);
 
     // 初始狀態
     const [systemState, setSystemState] = useState<CourtSystemState>({
@@ -823,7 +825,7 @@ const CourtSystem: React.FC = () => {
         if (!court || !court.isActive) return;
 
         // 使用 context 的方法來結束比賽
-        finishGame(courtId);
+        contextFinishGame(courtId);
 
         // 更新本地狀態
         setSystemState(prevState => {
@@ -1228,6 +1230,98 @@ const CourtSystem: React.FC = () => {
         });
     };
 
+    // 獲取所有球員列表，並確保每個球員都有 enabled 屬性
+    const getAllPlayers = () => {
+        const courtPlayers = courts.flatMap(court => court.players.map(p => ({
+            ...p,
+            enabled: true, // 在場地上的球員一定是啟用的
+            isPlaying: true
+        })));
+
+        const queuePlayers = waitingQueue.flatMap(group => group.players.map(p => ({
+            ...p,
+            enabled: true, // 在等待區的球員一定是啟用的
+            isQueuing: true
+        })));
+
+        const standbyWithEnabled = standbyPlayers.map(p => ({
+            ...p,
+            enabled: true, // 在待命區的球員一定是啟用的
+            isPlaying: false,
+            isQueuing: false
+        }));
+
+        // 合併所有球員並去重
+        const allPlayers = [...courtPlayers, ...queuePlayers, ...standbyWithEnabled];
+        const uniquePlayers = Array.from(new Map(allPlayers.map(p => [p.id, p])).values());
+
+        return uniquePlayers;
+    };
+
+    // 處理球員啟用/禁用
+    const handleTogglePlayer = (playerId: string, enabled: boolean) => {
+        setSystemState(prevState => {
+            // 如果要禁用球員
+            if (!enabled) {
+                // 從所有區域移除該球員
+                const updatedCourts = prevState.courts.map(court => ({
+                    ...court,
+                    players: court.players.filter(p => p.id !== playerId),
+                    isActive: court.players.filter(p => p.id !== playerId).length === 4
+                }));
+
+                const updatedWaitingQueue = prevState.waitingQueue
+                    .map(group => ({
+                        ...group,
+                        players: group.players.filter(p => p.id !== playerId)
+                    }))
+                    .filter(group => group.players.length > 0);
+
+                const updatedStandbyPlayers = prevState.standbyPlayers.filter(p => p.id !== playerId);
+
+                // 顯示提示訊息
+                setSnackbar({
+                    open: true,
+                    message: t('players.playerDisabled'),
+                    severity: 'info'
+                });
+
+                return {
+                    ...prevState,
+                    courts: updatedCourts,
+                    waitingQueue: updatedWaitingQueue,
+                    standbyPlayers: updatedStandbyPlayers
+                };
+            }
+            // 如果要啟用球員
+            else {
+                // 找到該球員
+                const player = getAllPlayers().find(p => p.id === playerId);
+                if (!player) return prevState;
+
+                // 將球員添加到待命區，並更新其狀態
+                const updatedPlayer = {
+                    ...player,
+                    enabled: true,
+                    isPlaying: false,
+                    isQueuing: false
+                };
+
+                // 顯示提示訊息
+                setSnackbar({
+                    open: true,
+                    message: t('players.playerEnabled'),
+                    severity: 'success'
+                });
+
+                return {
+                    ...prevState,
+                    standbyPlayers: [...prevState.standbyPlayers, updatedPlayer]
+                };
+            }
+        });
+    };
+
     function playTTS(text: string, lang: string = 'zh-TW') {
         if (!ttsEnabled) return Promise.resolve();
         return new Promise<void>((resolve, reject) => {
@@ -1284,6 +1378,12 @@ const CourtSystem: React.FC = () => {
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
             <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+            <PlayerListDialog
+                open={playerListOpen}
+                onClose={() => setPlayerListOpen(false)}
+                players={getAllPlayers()}
+                onTogglePlayer={handleTogglePlayer}
+            />
             <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Grid container spacing={3}>
                     {/* 場地區域 */}
@@ -1292,8 +1392,17 @@ const CourtSystem: React.FC = () => {
                             <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' }, flexGrow: 1 }}>
                                 {t('court.courts')}
                             </Typography>
-                            {/* 靠右排列，語音喇叭按鈕在設定按鈕左邊 */}
+                            {/* 靠右排列，球員列表按鈕在語音喇叭按鈕左邊 */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Tooltip title={t('players.viewPlayers')}>
+                                    <IconButton
+                                        onClick={() => setPlayerListOpen(true)}
+                                        size="small"
+                                        aria-label="view players"
+                                    >
+                                        <PeopleIcon />
+                                    </IconButton>
+                                </Tooltip>
                                 <Tooltip title={ttsEnabled ? t('court.ttsOn', '語音開啟') : t('court.ttsOff', '語音關閉')}>
                                     <IconButton
                                         onClick={() => setTtsEnabled(v => !v)}

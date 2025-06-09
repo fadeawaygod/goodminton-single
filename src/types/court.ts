@@ -4,6 +4,7 @@ export interface Player {
   name: string;
   isPlaying: boolean;
   isQueuing: boolean;
+  enabled: boolean;
 }
 
 // 一個場地的狀態

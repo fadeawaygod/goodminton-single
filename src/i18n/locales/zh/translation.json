@@ -29,7 +29,13 @@
         "playerList": "球員列表",
         "name": "姓名",
         "level": "等級",
-        "actions": "操作"
+        "actions": "操作",
+        "noPlayers": "目前沒有球員",
+        "viewPlayers": "查看球員",
+        "enablePlayer": "啟用球員",
+        "disablePlayer": "停用球員",
+        "playerEnabled": "已啟用球員",
+        "playerDisabled": "已停用球員"
     },
     "settings": {
         "title": "系統設定",
@@ -53,6 +59,8 @@
         "standbyArea": "待命區",
         "group": "組別",
         "playing": "比賽中",
+        "waiting": "等待中",
+        "standby": "待命中",
         "selectedPlayers": "已選擇球員",
         "groupCreated": "已成功組隊並加入排隊區",
         "maxPlayersSelected": "已達到最大選擇人數（4人）",
