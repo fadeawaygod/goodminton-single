@@ -734,7 +734,8 @@ export const CourtSystem: React.FC = () => {
 
             // 從等待隊列中移除該組
             const updatedWaitingQueue = prevState.waitingQueue.filter(group => group.id !== nextGroup.id);
-
+            const names = nextGroup.players.map(p => p.name);
+            playCourtTTS(names, String(emptyCourt.number));
             // 顯示提示
             setSnackbar({
                 open: true,
