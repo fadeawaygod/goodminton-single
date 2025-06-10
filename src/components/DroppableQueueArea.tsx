@@ -55,12 +55,20 @@ export const DroppableQueueArea: React.FC<DroppableQueueAreaProps> = ({
             role="region"
             aria-label="waiting queue"
             sx={{
-                minHeight: waitingQueue.length > 0 ? '400px' : 'auto',
-                maxHeight: '600px',
+                minHeight: {
+                    xs: waitingQueue.length > 0 ? '200px' : 'auto',
+                    sm: waitingQueue.length > 0 ? '400px' : 'auto'
+                },
+                maxHeight: {
+                    xs: '400px',
+                    sm: '600px'
+                },
                 position: 'relative',
                 backgroundColor: isOver ? 'action.hover' : 'transparent',
                 transition: 'background-color 0.2s',
                 overflow: waitingQueue.length > 0 ? 'auto' : 'hidden',
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
             }}
         >
             {isOver && (
@@ -79,7 +87,13 @@ export const DroppableQueueArea: React.FC<DroppableQueueAreaProps> = ({
                     {t('court.dropToCreateGroup')}
                 </Typography>
             )}
-            <List sx={{ pt: 3 }}>
+            <List sx={{
+                pt: 3,
+                height: '100%',
+                '& > *:last-child': {
+                    mb: 0
+                }
+            }}>
                 {waitingQueue.map((group, index) => (
                     <ListItem key={group.id} sx={{ display: 'block', mb: 3 }}>
                         <DraggableGroup
