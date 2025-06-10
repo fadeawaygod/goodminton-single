@@ -55,10 +55,12 @@ export const DroppableQueueArea: React.FC<DroppableQueueAreaProps> = ({
             role="region"
             aria-label="waiting queue"
             sx={{
-                minHeight: '400px',
+                minHeight: waitingQueue.length > 0 ? '400px' : 'auto',
+                maxHeight: '600px',
                 position: 'relative',
                 backgroundColor: isOver ? 'action.hover' : 'transparent',
                 transition: 'background-color 0.2s',
+                overflow: waitingQueue.length > 0 ? 'auto' : 'hidden',
             }}
         >
             {isOver && (

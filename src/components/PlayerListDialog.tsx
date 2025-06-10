@@ -92,27 +92,7 @@ export const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClos
                                             size="small"
                                             label={`Lv.${player.level}`}
                                         />
-                                        {player.isPlaying && (
-                                            <Chip
-                                                size="small"
-                                                color="primary"
-                                                label={t('playerList.status.playing')}
-                                            />
-                                        )}
-                                        {player.isQueuing && (
-                                            <Chip
-                                                size="small"
-                                                color="secondary"
-                                                label={t('playerList.status.waiting')}
-                                            />
-                                        )}
-                                        {!player.isPlaying && !player.isQueuing && (
-                                            <Chip
-                                                size="small"
-                                                variant="outlined"
-                                                label={t('playerList.status.standby')}
-                                            />
-                                        )}
+
                                     </Box>
                                 }
                             />

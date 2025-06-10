@@ -759,7 +759,6 @@ export const CourtSystem: React.FC = () => {
 
     // 處理比賽結束（下場）
     const handleFinishGame = (courtId: string) => {
-        console.log('handleFinishGame', courtId);
         const court = systemState.courts.find(c => c.id === courtId);
         if (!court || !court.isActive) return;
 
