@@ -15,7 +15,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Gender } from '../types/court';
 import { useAppDispatch } from '../store/hooks';
-import { addPlayer } from '../store/playerSlice';
+import { addPlayer } from '../store/slices/playerSlice';
 
 interface AddPlayerDialogProps {
     open: boolean;

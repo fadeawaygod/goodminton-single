@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
-import { RootState } from './index';
-import { Player, Gender } from '../types/court';
+import { RootState } from '../index';
+import { Player, Gender } from '../../types/court';
 
 interface PlayerState {
     players: Player[];
@@ -46,9 +46,6 @@ export const playerSlice = createSlice({
             if (player) {
                 player.isPlaying = action.payload.isPlaying;
                 player.isQueuing = action.payload.isQueuing;
-                if (!action.payload.isPlaying && player.isPlaying) {
-                    player.gamesPlayed += 1;
-                }
             }
         },
         updatePlayerGameCount: (state, action: PayloadAction<string>) => {

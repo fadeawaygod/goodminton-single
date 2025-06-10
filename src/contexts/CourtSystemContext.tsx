@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Player, Court, PlayerGroup, } from '../types/court'; import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectAllPlayers } from '../store/playerSlice';
+import { selectAllPlayers } from '../store/slices/playerSlice';
 
 const STORAGE_KEY = 'goodminton_players';
 const INIT_COURTS = 4;
@@ -195,6 +195,8 @@ export const CourtSystemProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const finishGame = (courtId: string) => {
         const court = courts.find(c => c.id === courtId);
+        console.log('finishGame', courtId, courtId, court);
+
         if (court) {
             // Update player game counts
             court.players.forEach(playerId => {

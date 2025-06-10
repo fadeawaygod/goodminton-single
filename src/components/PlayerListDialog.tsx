@@ -18,7 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { selectAllPlayers, deletePlayer, togglePlayerEnabled } from '../store/playerSlice';
+import { selectAllPlayers, deletePlayer, togglePlayerEnabled } from '../store/slices/playerSlice';
 import { AddPlayerDialog } from './AddPlayerDialog';
 
 interface PlayerListDialogProps {

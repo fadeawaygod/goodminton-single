@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import playerReducer from './playerSlice';
+import playerReducer from './slices/playerSlice';
 
 interface PlayerState {
     players: {
