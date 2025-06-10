@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Player, Gender, Court, PlayerGroup, CourtSystemState } from '../types/court';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { Player, Court, PlayerGroup, } from '../types/court'; import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectAllPlayers } from '../store/playerSlice';
 
 const STORAGE_KEY = 'goodminton_players';

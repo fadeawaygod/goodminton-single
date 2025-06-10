@@ -23,7 +23,7 @@ export const checkAndAssignCourt = (state: CourtSystemState): CourtSystemState |
         return null;
     }
 
-    // 取得等待時間最長的組別
+    // 取得組別
     const nextGroup = state.waitingQueue[0];
     if (!nextGroup || nextGroup.players.length !== 4) {
         return null;
