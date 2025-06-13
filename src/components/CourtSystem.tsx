@@ -699,15 +699,15 @@ export const CourtSystem: React.FC = () => {
             player.enabled && !player.isPlaying && !player.isQueuing
         );
         setStandbyPlayers(updatedStandbyPlayers);
-        // 更新場地狀態
+        // 更新場地中的players
         setCourts(prevCourts => prevCourts.map(court => ({
             ...court,
-            players: court.players.filter(player => player.enabled && !player.isPlaying && !player.isQueuing)
+            players: court.players.filter(player => player.enabled && player.isPlaying && !player.isQueuing)
         })));
         // 更新等待隊列
         setWaitingQueue(prevQueue => prevQueue.map(group => ({
             ...group,
-            players: group.players.filter(player => player.enabled && !player.isPlaying && !player.isQueuing)
+            players: group.players.filter(player => player.enabled && !player.isPlaying && player.isQueuing)
         })));
     }, [players]);
 
