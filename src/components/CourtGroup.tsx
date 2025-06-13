@@ -10,11 +10,11 @@ import { useTranslation } from 'react-i18next';
 
 interface CourtGroupProps {
     players: Player[];
-    courtNumber: number;
+    courtName: string;
     courtId: string;
 }
 
-export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtNumber, courtId }) => {
+export const CourtGroup: React.FC<CourtGroupProps> = ({ players, courtName: courtNumber, courtId }) => {
     const { t } = useTranslation();
 
     const [{ isDragging }, dragRef, preview] = useDrag(() => ({

@@ -23,21 +23,14 @@ export interface PlayerGroup {
 export interface Court {
   id: string;
   name: string;
-  number: number;
-  players: string[];
-  maxPlayers: number;
-  enabled: boolean;
-  isActive: boolean;
-}
-
-// 場地類型（包含完整的球員資訊）
-export interface CourtType extends Omit<Court, 'players'> {
   players: Player[];
+  maxPlayers: number;
+  isActive: boolean;
 }
 
 // 系統狀態
 export interface CourtSystemState {
-  courts: CourtType[];
+  courts: Court[];
   waitingQueue: PlayerGroup[];
   standbyPlayers: Player[];
   autoAssign: boolean;

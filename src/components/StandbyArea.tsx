@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { useDrop } from 'react-dnd';
-import { Player, CourtType } from '../types/court';
+import { Player, Court } from '../types/court';
 import { ItemTypes, chameleonColors } from '../constants/court';
 import { DraggablePlayer } from './DraggablePlayer';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ interface StandbyAreaProps {
     onPlayerDrop: (player: Player) => void;
     onPlayerMoveToStandby: (player: Player) => void;
     onGroupDissolve: (players: Player[]) => void;
-    courts: CourtType[];
+    courts: Court[];
 }
 
 export const StandbyArea: React.FC<StandbyAreaProps> = ({

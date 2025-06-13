@@ -7,7 +7,6 @@ import CourtSystem from './components/CourtSystem';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Settings from './pages/Settings';
-import { CourtSystemProvider } from './contexts/CourtSystemContext';
 import { Provider } from 'react-redux';
 import { store } from './store';
 
@@ -34,20 +33,18 @@ const App: React.FC = () => {
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <CourtSystemProvider>
-            <Router basename={basePath}>
-              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <Header />
-                <main style={{ flexGrow: 1, padding: '20px 0' }}>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/courts" element={<CourtSystem />} />
-                    <Route path="/settings" element={<Settings />} />
-                  </Routes>
-                </main>
-              </div>
-            </Router>
-          </CourtSystemProvider>
+          <Router basename={basePath}>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <Header />
+              <main style={{ flexGrow: 1, padding: '20px 0' }}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/courts" element={<CourtSystem />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Routes>
+              </main>
+            </div>
+          </Router>
         </ThemeProvider>
       </I18nextProvider>
     </Provider>

@@ -1,4 +1,4 @@
-import { Player, CourtType, PlayerGroup, CourtSystemState } from '../types/court';
+import { Player, Court, PlayerGroup, CourtSystemState } from '../types/court';
 import { v4 as uuidv4 } from "uuid";
 
 export const createInitialState = (courtCount: number, initialPlayers: Player[] = []): CourtSystemState => ({
@@ -44,7 +44,7 @@ export const courtReducer = (state: CourtSystemState, action: CourtAction): Cour
                 };
             } else {
                 // Add new courts
-                const newCourts: CourtType[] = Array(count - state.courts.length)
+                const newCourts: Court[] = Array(count - state.courts.length)
                     .fill(null)
                     .map((_, index) => ({
                         id: `court-${state.courts.length + index + 1}`,

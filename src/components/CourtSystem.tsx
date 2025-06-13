@@ -27,13 +27,13 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { MultiBackend, TouchTransition, Preview } from 'react-dnd-multi-backend';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import type { Court } from '../types/court';
-import { CourtType, Player, PlayerGroup, CourtSystemState } from '../types/court';
+import { Court as CourtType, Player, PlayerGroup, CourtSystemState } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
-import { useCourtSystem } from '../contexts/CourtSystemContext';
 import CourtSettingsDialog from './CourtSettingsDialog';
 import { PlayerListDialog } from './PlayerListDialog';
 import { DraggablePlayer } from './DraggablePlayer';
+import { useAppSelector } from '../store/hooks';
+import { selectAllPlayers } from '../store/slices/playerSlice';
 
 // 定義拖拽類型
 const ItemTypes = {
@@ -412,7 +412,7 @@ const Court: React.FC<{
     const hasPlayers = court.players.length > 0;
 
     return (
-        <div ref={elementRef} data-testid={`court-${court.number}`}>
+        <div ref={elementRef} data-testid={`court-${court.name}`}>
             <Paper
                 elevation={1}
                 sx={{
@@ -448,7 +448,7 @@ const Court: React.FC<{
                             fontWeight: 'bold',
                         }}
                     >
-                        {t('court.number', { number: court.number })}
+                        {court.name}
                     </Typography>
                     {hasPlayers && (
                         <Tooltip title={t('court.finishGame')} placement="top">
@@ -639,44 +639,67 @@ const StandbyArea: React.FC<{
 
 export const CourtSystem: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const {
-        courts,
-        waitingQueue,
-        autoAssign,
-        standbyPlayers,
-        setCourtCount,
-        finishGame: contextFinishGame,
-        movePlayersToStandby,
-        courtCount,
-        players
-    } = useCourtSystem();
+    const [courts, setCourts] = useState<CourtType[]>([]);
+    const [standbyPlayers, setStandbyPlayers] = useState<Player[]>([]);
+    const [waitingQueue, setWaitingQueue] = useState<PlayerGroup[]>([]);
+    const [autoAssign, setAutoAssign] = useState(false);
+    const [courtCount, setCourtCount] = useState(4);
+    const players = useAppSelector(selectAllPlayers);
+
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
     const [isPlayerListOpen, setIsPlayerListOpen] = useState(false);
 
-    // Convert Court[] to CourtType[]
-    const convertCourts = (courts: Court[]): CourtType[] => {
-        return courts.map(court => ({
-            ...court,
-            players: court.players
-                .map((playerId: string) => players.find(p => p.id === playerId))
-                .filter((p): p is Player => p !== undefined)
-        }));
-    };
 
     // 初始狀態
     const [systemState, setSystemState] = useState<CourtSystemState>({
-        courts: convertCourts(courts),
+        courts: courts,
         waitingQueue: waitingQueue,
         standbyPlayers: standbyPlayers,
         autoAssign: autoAssign,
     });
+    useEffect(() => {
+        const initialCourts = Array(courtCount).fill(null).map((_, i) => ({
+            id: uuidv4(),
+            name: `${i + 1}`,
+            players: [],
+            maxPlayers: 4,
+            isActive: false,
+        }));
+        setCourts(initialCourts);
+    }, []); // 只在組件掛載時執行一次
+
+    // 監聽 courtCount 變化並調整 courts 陣列
+    useEffect(() => {
+        setCourts(prevCourts => {
+            if (courtCount > prevCourts.length) {
+                // 擴充陣列 - 添加新的 court 物件
+                const newCourts = [...prevCourts];
+                for (let i = prevCourts.length; i < courtCount; i++) {
+                    newCourts.push({
+                        id: uuidv4(),
+                        name: `Court ${i + 1}`,
+                        players: [],
+                        maxPlayers: 4,
+                        isActive: false,
+                        // 其他預設屬性
+                    });
+                }
+                return newCourts;
+            } else if (courtCount < prevCourts.length) {
+                // 縮減陣列 - 移除多餘的 court 物件
+                return prevCourts.slice(0, courtCount);
+            }
+            // 如果數量不變，返回原陣列
+            return prevCourts;
+        });
+    }, [courtCount]); // 只在 courtCount 變化時執行
 
     // 當 courts 或 waitingQueue 改變時更新系統狀態
     useEffect(() => {
         setSystemState(prev => ({
             ...prev,
-            courts: convertCourts(courts),
+            courts: courts,
             waitingQueue: waitingQueue,
             standbyPlayers: standbyPlayers,
             autoAssign: autoAssign,
@@ -689,6 +712,17 @@ export const CourtSystem: React.FC = () => {
             setCourtCount(courtCount);
         }
     }, [courtCount, courts.length, setCourtCount]);
+
+    useEffect(() => {
+        // 當球員列表變化時，更新待命區
+        // 1. 保留所有已經在待命區且仍然啟用的球員
+        // 2. 添加所有新啟用的球員到待命區
+        const updatedStandbyPlayers = players.filter(player =>
+            player.enabled && !player.isPlaying && !player.isQueuing
+        );
+
+        setStandbyPlayers(updatedStandbyPlayers);
+    }, [players]);
 
     // 修改 snackbar 的類型定義
     const [snackbar, setSnackbar] = useState<{
@@ -735,11 +769,11 @@ export const CourtSystem: React.FC = () => {
             // 從等待隊列中移除該組
             const updatedWaitingQueue = prevState.waitingQueue.filter(group => group.id !== nextGroup.id);
             const names = nextGroup.players.map(p => p.name);
-            playCourtTTS(names, String(emptyCourt.number));
+            playCourtTTS(names, String(emptyCourt.name));
             // 顯示提示
             setSnackbar({
                 open: true,
-                message: t('court.groupMovedToCourt', { court: emptyCourt.number }),
+                message: t('court.groupMovedToCourt', { court: emptyCourt.name }),
                 severity: 'success'
             });
 
@@ -763,8 +797,6 @@ export const CourtSystem: React.FC = () => {
         const court = systemState.courts.find(c => c.id === courtId);
         if (!court || !court.isActive) return;
 
-        // 使用 context 的方法來結束比賽
-        contextFinishGame(courtId);
 
         // 更新本地狀態
         setSystemState(prevState => {
@@ -787,7 +819,7 @@ export const CourtSystem: React.FC = () => {
         });
 
         // 播放語音提示
-        playTTS(t('court.ttsGameFinished', { number: court.number }));
+        playTTS(t('court.ttsGameFinished', { number: court.name }));
 
         // 顯示提示
         setSnackbar({
@@ -1036,7 +1068,7 @@ export const CourtSystem: React.FC = () => {
 
             setSnackbar({
                 open: true,
-                message: t('court.groupMovedToCourt', { court: toCourt.number }),
+                message: t('court.groupMovedToCourt', { court: toCourt.name }),
                 severity: 'success'
             });
 
@@ -1101,10 +1133,10 @@ export const CourtSystem: React.FC = () => {
             );
             const updatedWaitingQueue = prevState.waitingQueue.filter(g => g.id !== groupId);
             const names = group.players.map(p => p.name);
-            playCourtTTS(names, String(court.number));
+            playCourtTTS(names, String(court.name));
             setSnackbar({
                 open: true,
-                message: t('court.groupMovedToCourt', { court: court.number }),
+                message: t('court.groupMovedToCourt', { court: court.name }),
                 severity: 'success'
             });
             return {
@@ -1169,6 +1201,16 @@ export const CourtSystem: React.FC = () => {
         });
     };
 
+    const movePlayersToStandby = (players: Player[]) => {
+        setStandbyPlayers(prev => {
+            const newPlayers = players.filter(p =>
+                p.enabled && // 只添加已啟用的球員
+                !prev.some(existingPlayer => existingPlayer.id === p.id) // 避免重複
+            );
+            return [...prev, ...newPlayers];
+        });
+    };
+
 
     function playTTS(text: string, lang: string = 'zh-TW') {
         if (!ttsEnabled) return Promise.resolve();
@@ -1225,7 +1267,7 @@ export const CourtSystem: React.FC = () => {
 
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
-            <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+            <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} courtCount={courtCount} setCourtCount={setCourtCount} />
             <PlayerListDialog
                 open={isPlayerListOpen}
                 onClose={() => setIsPlayerListOpen(false)}
@@ -1344,5 +1386,22 @@ export const CourtSystem: React.FC = () => {
         </DndProvider>
     );
 };
+
+
+const loadPlayersFromStorage = (): Player[] => {
+    try {
+        const playersJson = localStorage.getItem('players');
+        if (!playersJson) return [];
+        const players = JSON.parse(playersJson);
+        if (!Array.isArray(players)) return [];
+        return players.map((p: Player) => ({
+            ...p,
+        }));
+    } catch (e) {
+        console.error('Failed to parse players from localStorage:', e);
+        return [];
+    }
+};
+
 
 export default CourtSystem;

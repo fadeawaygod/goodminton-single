@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Paper, Typography, Button } from '@mui/material';
-import { CourtType } from '../types/court';
+import { Court as CourtType } from '../types/court';
 import { CourtGroup } from './CourtGroup';
 import { useTranslation } from 'react-i18next';
 import { chameleonColors } from '../constants/court';
@@ -31,7 +31,7 @@ const Court: React.FC<CourtProps> = ({ court, onFinishGame }) => {
         >
             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6">
-                    {t('court.number', { number: court.number })}
+                    {court.name}
                 </Typography>
                 {court.isActive && (
                     <Button
@@ -47,7 +47,7 @@ const Court: React.FC<CourtProps> = ({ court, onFinishGame }) => {
             {court.players.length > 0 ? (
                 <CourtGroup
                     players={court.players}
-                    courtNumber={court.number}
+                    courtName={court.name}
                     courtId={court.id}
                 />
             ) : (

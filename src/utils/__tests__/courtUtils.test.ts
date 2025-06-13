@@ -1,12 +1,12 @@
 import { findAvailableCourt, findNextFullGroup, checkAndAssignCourt } from '../courtUtils';
-import { CourtType, PlayerGroup, CourtSystemState } from '../../types/court';
+import { Court, PlayerGroup, CourtSystemState } from '../../types/court';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('courtUtils', () => {
     describe('findAvailableCourt', () => {
         it('should return first available empty court', () => {
             // Arrange
-            const courts: CourtType[] = [
+            const courts: Court[] = [
                 { id: 'court-1', number: 1, players: [{ id: '1', name: 'Player 1', isPlaying: true, isQueuing: false }], isActive: false },
                 { id: 'court-2', number: 2, players: [], isActive: false },
                 { id: 'court-3', number: 3, players: [], isActive: true },
@@ -21,7 +21,7 @@ describe('courtUtils', () => {
 
         it('should return undefined when no available court', () => {
             // Arrange
-            const courts: CourtType[] = [
+            const courts: Court[] = [
                 { id: 'court-1', number: 1, players: [], isActive: true },
                 { id: 'court-2', number: 2, players: [{ id: '1', name: 'Player 1', isPlaying: true, isQueuing: false }], isActive: false },
             ];

@@ -10,16 +10,16 @@ import {
     Box
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useCourtSystem } from '../contexts/CourtSystemContext';
 
 interface CourtSettingsDialogProps {
     open: boolean;
     onClose: () => void;
+    courtCount: number;
+    setCourtCount: (count: number) => void;
 }
 
-const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose }) => {
+const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose, courtCount, setCourtCount }) => {
     const { t } = useTranslation();
-    const { courtCount, setCourtCount } = useCourtSystem();
     const [localCourtCount, setLocalCourtCount] = React.useState(courtCount);
 
     // Reset local state when dialog opens
