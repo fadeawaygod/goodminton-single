@@ -6,6 +6,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import { Player } from '../types/court';
 import { ItemTypes } from '../constants/court';
 import { chameleonColors } from '../constants/court';
+import { getLevelColor } from '../constants/playerLevelColors';
 
 // 定義性別對應的顏色
 const genderColors = {
@@ -40,6 +41,9 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player }) => {
         [dragRef]
     );
 
+    // 獲取球員等級對應的顏色
+    const levelColor = getLevelColor(player.level);
+
     return (
         <div
             ref={elementRef}
@@ -60,21 +64,22 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player }) => {
                         WebkitUserSelect: 'none',
                         MozUserSelect: 'none',
                         '& .MuiChip-label': {
-                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            color: '#000000',
+                            fontWeight: 'bold',
                         },
                         '& .MuiChip-icon': {
                             color: `${genderColors[player.gender]} !important`
                         },
-                        backgroundColor: player.isPlaying ? chameleonColors.primary : chameleonColors.secondary,
-                        color: 'white',
+                        backgroundColor: player.isPlaying ? levelColor.main : levelColor.light,
+                        border: `1px solid ${levelColor.main}`,
                         '&:hover': {
-                            backgroundColor: player.isPlaying ? chameleonColors.hover : chameleonColors.primary,
+                            backgroundColor: player.isPlaying ? levelColor.dark : levelColor.main,
                         },
                         transition: 'all 0.3s ease',
                     }}
                 />
-
             </Box>
-        </div >
+        </div>
     );
-}; 
+};
