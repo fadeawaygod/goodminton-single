@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect } from 'react';
-import { Chip, Box, Typography } from '@mui/material';
+import { Chip, Box } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { Player } from '../types/court';
 import { ItemTypes } from '../constants/court';
-import { chameleonColors } from '../constants/court';
 import { getLevelColor } from '../constants/playerLevelColors';
 
 // 定義性別對應的顏色
