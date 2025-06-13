@@ -14,12 +14,7 @@ const genderColors = {
     unknown: '#BDBDBD'  // 淺灰色
 };
 
-// 定義比賽中的固定顏色
-const playingColors = {
-    main: '#2E8B57',    // 海藻綠
-    light: '#E0FFF0',   // 淺薄荷綠
-    dark: '#1B5E3C',    // 深海藻綠
-};
+
 
 interface DraggablePlayerProps {
     player: Player;
@@ -51,7 +46,7 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player }) => {
     const levelColor = getLevelColor(player.level);
 
     // 根據球員狀態選擇顏色
-    const colors = player.isPlaying ? playingColors : levelColor;
+    const colors = levelColor;
 
     return (
         <div
@@ -80,10 +75,10 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player }) => {
                         '& .MuiChip-icon': {
                             color: `${genderColors[player.gender]} !important`
                         },
-                        backgroundColor: player.isPlaying ? colors.main : colors.light,
+                        backgroundColor: colors.light,
                         border: `1px solid ${colors.main}`,
                         '&:hover': {
-                            backgroundColor: player.isPlaying ? colors.dark : colors.main,
+                            backgroundColor: colors.main,
                         },
                         transition: 'all 0.3s ease',
                     }}
