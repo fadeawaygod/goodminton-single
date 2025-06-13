@@ -54,6 +54,7 @@
     },
     "court": {
         "courts": "場地",
+        "courtsDescription": "即時管理場地、球員和比賽",
         "number": "場地 {{number}}",
         "waitingQueue": "排隊區",
         "standbyArea": "待命區",

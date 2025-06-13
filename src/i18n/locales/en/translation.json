@@ -48,6 +48,7 @@
     },
     "court": {
         "courts": "Courts",
+        "courtsDescription": "Manage courts, players, and matches in real-time",
         "number": "Court {{number}}",
         "waitingQueue": "Waiting Queue",
         "standbyArea": "Standby Area",

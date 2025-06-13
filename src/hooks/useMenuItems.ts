@@ -6,14 +6,9 @@ export const useMenuItems = (): MenuItem[] => {
 
   return [
     {
-      title: t('common.schedule'),
-      path: '/schedule',
-      description: t('schedule.viewSchedule')
-    },
-    {
-      title: t('common.players'),
-      path: '/players',
-      description: t('players.playerList')
+      title: t('court.courts'),
+      path: '/courts',
+      description: t('court.courtsDescription')
     },
     {
       title: t('common.settings'),
