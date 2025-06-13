@@ -757,6 +757,11 @@ export const CourtSystem: React.FC = () => {
     const handleFinishGame = (courtId: string) => {
         const court = courts.find(c => c.id === courtId);
         if (!court || !court.isActive) return;
+        // 更新球員的uPlayerGameCount
+        for (const player of court.players) {
+            player.gamesPlayed++;
+        }
+
 
         // 更新本地狀態
         setCourts(prevCourts => prevCourts.map(c =>
@@ -764,6 +769,8 @@ export const CourtSystem: React.FC = () => {
                 ? { ...c, players: [], isActive: false, startTime: undefined }
                 : c
         ));
+
+
 
         setStandbyPlayers(prevPlayers => [
             ...prevPlayers,
