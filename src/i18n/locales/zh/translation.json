@@ -115,6 +115,7 @@
         "importResult": {
             "success": "成功匯入 {{count}} 位球員",
             "duplicate": "{{count}} 位球員已存在",
+            "duplicateNames": "重複的名稱：{{names}}",
             "failed": "匯入失敗。請確保每個球員名稱各佔一行",
             "noPlayers": "沒有匯入任何球員。請檢查剪貼簿內容每行格式應為 1. 球員名稱"
         }
