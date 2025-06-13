@@ -692,38 +692,34 @@ export const CourtSystem: React.FC = () => {
         });
     }, [courtCount]); // 只在 courtCount 變化時執行
 
-    // 當球員列表變化時，更新待命區
     useEffect(() => {
-        // 1. 保留所有已經在待命區且仍然啟用的球員
-        // 2. 添加所有新啟用的球員到待命區
+        //TODO: 更新等待隊列和場地狀態
+        // 更新待命區
         const updatedStandbyPlayers = players.filter(player =>
             player.enabled && !player.isPlaying && !player.isQueuing
         );
-
         setStandbyPlayers(updatedStandbyPlayers);
+        // 更新場地狀態
+        setCourts(prevCourts => prevCourts.map(court => ({
+            ...court,
+            players: court.players.filter(player => player.enabled && !player.isPlaying && !player.isQueuing)
+        })));
+        // 更新等待隊列
+        setWaitingQueue(prevQueue => prevQueue.map(group => ({
+            ...group,
+            players: group.players.filter(player => player.enabled && !player.isPlaying && !player.isQueuing)
+        })));
     }, [players]);
 
     // 檢查並自動安排球員上場
     const checkAndAssignCourt = useCallback(() => {
-        // 找出第一個空場地
+        if (waitingQueue.length === 0 || waitingQueue[0].players.length < 4) {
+            return;
+        }
         const emptyCourt = courts.find(court => !court.isActive && court.players.length === 0);
         if (!emptyCourt) return;
 
-        // 確保空場地不在已經開始的比賽中
-        if (courts.some(court => court.isActive && court.players.length > 0)) {
-            return;
-        }
-
-        // 獲取第一個未滿4人的組別
-        const firstNotFullGroup = waitingQueue.find(group => group.players.length < 4);
-        if (firstNotFullGroup) {
-            // 如果有未滿4人的組，則不自動安排
-            return;
-        }
-
-        // 取得第一個滿4人的等待組
-        const nextGroup = waitingQueue.find(group => group.players.length === 4);
-        if (!nextGroup) return;
+        const nextGroup = waitingQueue[0];
 
         // 更新場地狀態
         setCourts(prevCourts => prevCourts.map(court =>
@@ -751,10 +747,11 @@ export const CourtSystem: React.FC = () => {
 
     // 當自動分配開啟時檢查是否可以安排球員上場
     useEffect(() => {
+        console.log('autoAssign', autoAssign);
         if (autoAssign) {
             checkAndAssignCourt();
         }
-    }, [courts, checkAndAssignCourt, autoAssign]);
+    }, [courts, players, checkAndAssignCourt, autoAssign]);
 
     // 處理比賽結束（下場）
     const handleFinishGame = (courtId: string) => {
