@@ -40,6 +40,7 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
         success: number;
         duplicate: number;
         show: boolean;
+        duplicateNames?: string[];
     } | null>(null);
 
     const handleDeletePlayer = (playerId: string) => {
@@ -75,10 +76,12 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
 
             let successCount = 0;
             let duplicateCount = 0;
+            const duplicateNames: string[] = [];
 
             for (const name of names) {
                 if (players.some(p => p.name === name)) {
                     duplicateCount++;
+                    duplicateNames.push(name);
                     continue;
                 }
 
@@ -93,7 +96,8 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
             setImportResult({
                 success: successCount,
                 duplicate: duplicateCount,
-                show: true
+                show: true,
+                duplicateNames
             });
         } catch (error) {
             console.error('Failed to read clipboard:', error);
@@ -215,9 +219,18 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                             </Typography>
                         )}
                         {importResult && importResult.duplicate > 0 && (
-                            <Typography>
-                                {t('playerList.importResult.duplicate', { count: importResult.duplicate })}
-                            </Typography>
+                            <>
+                                <Typography>
+                                    {t('playerList.importResult.duplicate', { count: importResult.duplicate })}
+                                </Typography>
+                                {importResult.duplicateNames && importResult.duplicateNames.length > 0 && (
+                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                        {t('playerList.importResult.duplicateNames', {
+                                            names: importResult.duplicateNames.join(', ')
+                                        })}
+                                    </Typography>
+                                )}
+                            </>
                         )}
                         {(!importResult || (importResult.success === 0 && importResult.duplicate === 0)) && (
                             <Typography>
