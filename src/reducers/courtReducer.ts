@@ -6,7 +6,7 @@ export const createInitialState = (courtCount: number, initialPlayers: Player[] 
         .fill(null)
         .map((_, index) => ({
             id: `court-${index + 1}`,
-            name: `Court ${index + 1}`,
+            name: `${index + 1}`,
             number: index + 1,
             players: [],
             maxPlayers: 4,
@@ -48,7 +48,7 @@ export const courtReducer = (state: CourtSystemState, action: CourtAction): Cour
                     .fill(null)
                     .map((_, index) => ({
                         id: `court-${state.courts.length + index + 1}`,
-                        name: `Court ${state.courts.length + index + 1}`,
+                        name: `${state.courts.length + index + 1}`,
                         number: state.courts.length + index + 1,
                         players: [],
                         maxPlayers: 4,

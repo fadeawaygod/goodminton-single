@@ -678,7 +678,7 @@ export const CourtSystem: React.FC = () => {
                 for (let i = prevCourts.length; i < courtCount; i++) {
                     newCourts.push({
                         id: uuidv4(),
-                        name: `Court ${i + 1}`,
+                        name: `${i + 1}`,
                         players: [],
                         maxPlayers: 4,
                         isActive: false,
