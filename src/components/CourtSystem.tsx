@@ -649,15 +649,13 @@ export const CourtSystem: React.FC = () => {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
     const [isPlayerListOpen, setIsPlayerListOpen] = useState(false);
+    const [snackbar, setSnackbar] = useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'info' | 'warning' | 'error';
+    }>({ open: false, message: '', severity: 'info' });
 
-
-    // 初始狀態
-    const [systemState, setSystemState] = useState<CourtSystemState>({
-        courts: courts,
-        waitingQueue: waitingQueue,
-        standbyPlayers: standbyPlayers,
-        autoAssign: autoAssign,
-    });
+    // 初始場地設置
     useEffect(() => {
         const initialCourts = Array(courtCount).fill(null).map((_, i) => ({
             id: uuidv4(),
@@ -682,7 +680,6 @@ export const CourtSystem: React.FC = () => {
                         players: [],
                         maxPlayers: 4,
                         isActive: false,
-                        // 其他預設屬性
                     });
                 }
                 return newCourts;
@@ -695,20 +692,8 @@ export const CourtSystem: React.FC = () => {
         });
     }, [courtCount]); // 只在 courtCount 變化時執行
 
-    // 當 courts 或 waitingQueue 改變時更新系統狀態
+    // 當球員列表變化時，更新待命區
     useEffect(() => {
-        setSystemState(prev => ({
-            ...prev,
-            courts: courts,
-            waitingQueue: waitingQueue,
-            standbyPlayers: standbyPlayers,
-            autoAssign: autoAssign,
-        }));
-    }, [courts, waitingQueue, autoAssign, standbyPlayers, players]);
-
-
-    useEffect(() => {
-        // 當球員列表變化時，更新待命區
         // 1. 保留所有已經在待命區且仍然啟用的球員
         // 2. 添加所有新啟用的球員到待命區
         const updatedStandbyPlayers = players.filter(player =>
@@ -718,99 +703,75 @@ export const CourtSystem: React.FC = () => {
         setStandbyPlayers(updatedStandbyPlayers);
     }, [players]);
 
-    // 修改 snackbar 的類型定義
-    const [snackbar, setSnackbar] = useState<{
-        open: boolean;
-        message: string;
-        severity: 'success' | 'info' | 'warning' | 'error';
-    }>({ open: false, message: '', severity: 'info' });
-
     // 檢查並自動安排球員上場
     const checkAndAssignCourt = useCallback(() => {
-        setSystemState(prevState => {
-            // 找出第一個空場地
-            const emptyCourt = prevState.courts.find(court => !court.isActive && court.players.length === 0);
-            if (!emptyCourt) return prevState;
+        // 找出第一個空場地
+        const emptyCourt = courts.find(court => !court.isActive && court.players.length === 0);
+        if (!emptyCourt) return;
 
-            // 確保空場地不在已經開始的比賽中
-            if (prevState.courts.some(court => court.isActive && court.players.length > 0)) {
-                return prevState;
-            }
+        // 確保空場地不在已經開始的比賽中
+        if (courts.some(court => court.isActive && court.players.length > 0)) {
+            return;
+        }
 
-            // 獲取第一個未滿4人的組別
-            const firstNotFullGroup = prevState.waitingQueue.find(group => group.players.length < 4);
-            if (firstNotFullGroup) {
-                // 如果有未滿4人的組，則不自動安排
-                return prevState;
-            }
+        // 獲取第一個未滿4人的組別
+        const firstNotFullGroup = waitingQueue.find(group => group.players.length < 4);
+        if (firstNotFullGroup) {
+            // 如果有未滿4人的組，則不自動安排
+            return;
+        }
 
-            // 取得第一個滿4人的等待組
-            const nextGroup = prevState.waitingQueue.find(group => group.players.length === 4);
-            if (!nextGroup) return prevState;
+        // 取得第一個滿4人的等待組
+        const nextGroup = waitingQueue.find(group => group.players.length === 4);
+        if (!nextGroup) return;
 
-            // 更新場地狀態
-            const updatedCourts = prevState.courts.map(court =>
-                court.id === emptyCourt.id
-                    ? {
-                        ...court,
-                        players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
-                        isActive: true,
-                        startTime: new Date(),
-                    }
-                    : court
-            );
+        // 更新場地狀態
+        setCourts(prevCourts => prevCourts.map(court =>
+            court.id === emptyCourt.id
+                ? {
+                    ...court,
+                    players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                    isActive: true,
+                    startTime: new Date(),
+                }
+                : court
+        ));
 
-            // 從等待隊列中移除該組
-            const updatedWaitingQueue = prevState.waitingQueue.filter(group => group.id !== nextGroup.id);
-            const names = nextGroup.players.map(p => p.name);
-            playCourtTTS(names, String(emptyCourt.name));
-            // 顯示提示
-            setSnackbar({
-                open: true,
-                message: t('court.groupMovedToCourt', { court: emptyCourt.name }),
-                severity: 'success'
-            });
-
-            return {
-                ...prevState,
-                courts: updatedCourts,
-                waitingQueue: updatedWaitingQueue,
-            };
+        // 從等待隊列中移除該組
+        setWaitingQueue(prevQueue => prevQueue.filter(group => group.id !== nextGroup.id));
+        const names = nextGroup.players.map(p => p.name);
+        playCourtTTS(names, String(emptyCourt.name));
+        // 顯示提示
+        setSnackbar({
+            open: true,
+            message: t('court.groupMovedToCourt', { court: emptyCourt.name }),
+            severity: 'success'
         });
-    }, [t]);
+    }, [t, courts, waitingQueue]);
 
-    // 當系統狀態改變時檢查是否可以安排球員上場
+    // 當自動分配開啟時檢查是否可以安排球員上場
     useEffect(() => {
-        if (systemState.autoAssign) {
+        if (autoAssign) {
             checkAndAssignCourt();
         }
-    }, [systemState.courts, checkAndAssignCourt, systemState.autoAssign]);
+    }, [courts, checkAndAssignCourt, autoAssign]);
 
     // 處理比賽結束（下場）
     const handleFinishGame = (courtId: string) => {
-        const court = systemState.courts.find(c => c.id === courtId);
+        const court = courts.find(c => c.id === courtId);
         if (!court || !court.isActive) return;
 
-
         // 更新本地狀態
-        setSystemState(prevState => {
-            const updatedCourts = prevState.courts.map(c =>
-                c.id === courtId
-                    ? { ...c, players: [], isActive: false, startTime: undefined }
-                    : c
-            );
+        setCourts(prevCourts => prevCourts.map(c =>
+            c.id === courtId
+                ? { ...c, players: [], isActive: false, startTime: undefined }
+                : c
+        ));
 
-            const updatedStandbyPlayers = [
-                ...prevState.standbyPlayers,
-                ...court.players.map(p => ({ ...p, isPlaying: false }))
-            ];
-
-            return {
-                ...prevState,
-                courts: updatedCourts,
-                standbyPlayers: updatedStandbyPlayers,
-            };
-        });
+        setStandbyPlayers(prevPlayers => [
+            ...prevPlayers,
+            ...court.players.map(p => ({ ...p, isPlaying: false }))
+        ]);
 
         // 播放語音提示
         playTTS(t('court.ttsGameFinished', { number: court.name }));
@@ -825,139 +786,119 @@ export const CourtSystem: React.FC = () => {
 
     // 處理球員拖拽到場地（改為加入等待隊列）
     const handlePlayerDrop = (player: Player, targetCourtId?: string) => {
-        setSystemState(prevState => {
-            // 如果有指定目標場地，檢查該場地是否可用
-            if (targetCourtId) {
-                const targetCourt = prevState.courts.find(c => c.id === targetCourtId);
-                if (targetCourt && !targetCourt.isActive) {
-                    // 如果場地已經有球員，則添加到現有組
-                    if (targetCourt.players.length > 0 && targetCourt.players.length < 4) {
-                        // 防止同一球員重複加入同一場地
-                        if (targetCourt.players.some(p => p.id === player.id)) {
-                            setSnackbar({
-                                open: true,
-                                message: t('court.playerAlreadyInCourt'),
-                                severity: 'warning'
-                            });
-                            return prevState;
-                        }
-                        const updatedCourts = prevState.courts.map(court => {
-                            if (court.id === targetCourtId) {
-                                return {
-                                    ...court,
-                                    players: [
-                                        ...court.players,
-                                        { ...player, isPlaying: true, isQueuing: false }
-                                    ],
-                                    isActive: court.players.length + 1 === 4 // 如果加入後達到4人，則設為活動
-                                };
-                            }
-                            // 從其他場地移除該球員
-                            if (court.players.some(p => p.id === player.id)) {
-                                const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                                return {
-                                    ...court,
-                                    players: remainingPlayers,
-                                    isActive: remainingPlayers.length === 4
-                                };
-                            }
-                            return court;
+        // 如果有指定目標場地，檢查該場地是否可用
+        if (targetCourtId) {
+            const targetCourt = courts.find(c => c.id === targetCourtId);
+            if (targetCourt && !targetCourt.isActive) {
+                // 如果場地已經有球員，則添加到現有組
+                if (targetCourt.players.length > 0 && targetCourt.players.length < 4) {
+                    // 防止同一球員重複加入同一場地
+                    if (targetCourt.players.some(p => p.id === player.id)) {
+                        setSnackbar({
+                            open: true,
+                            message: t('court.playerAlreadyInCourt'),
+                            severity: 'warning'
                         });
-
-                        // 從待命區和排隊區移除該球員
-                        const updatedStandbyPlayers = prevState.standbyPlayers.filter(p => p.id !== player.id);
-                        const updatedWaitingQueue = prevState.waitingQueue
-                            .map(group => ({
-                                ...group,
-                                players: group.players.filter(p => p.id !== player.id)
-                            }))
-                            .filter(group => group.players.length > 0);
-                        return {
-                            ...prevState,
-                            courts: updatedCourts,
-                            waitingQueue: updatedWaitingQueue,
-                            standbyPlayers: updatedStandbyPlayers,
-                        };
-                    } else if (targetCourt.players.length === 0) {
-                        // 如果場地是空的，創建新組
-                        const updatedCourts = prevState.courts.map(court => {
-                            if (court.id === targetCourtId) {
-                                return {
-                                    ...court,
-                                    players: [{ ...player, isPlaying: true, isQueuing: false }],
-                                    isActive: false
-                                };
-                            }
-                            // 從其他場地移除該球員
-                            if (court.players.some(p => p.id === player.id)) {
-                                const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                                return {
-                                    ...court,
-                                    players: remainingPlayers,
-                                    isActive: remainingPlayers.length === 4
-                                };
-                            }
-                            return court;
-                        });
-
-                        // 從待命區和排隊區移除該球員
-                        const updatedStandbyPlayers = prevState.standbyPlayers.filter(p => p.id !== player.id);
-                        const updatedWaitingQueue = prevState.waitingQueue
-                            .map(group => ({
-                                ...group,
-                                players: group.players.filter(p => p.id !== player.id)
-                            }))
-                            .filter(group => group.players.length > 0);
-
-                        return {
-                            ...prevState,
-                            courts: updatedCourts,
-                            waitingQueue: updatedWaitingQueue,
-                            standbyPlayers: updatedStandbyPlayers,
-                        };
+                        return;
                     }
+                    setCourts(prevCourts => prevCourts.map(court => {
+                        if (court.id === targetCourtId) {
+                            return {
+                                ...court,
+                                players: [
+                                    ...court.players,
+                                    { ...player, isPlaying: true, isQueuing: false }
+                                ],
+                                isActive: court.players.length + 1 === 4 // 如果加入後達到4人，則設為活動
+                            };
+                        }
+                        // 從其他場地移除該球員
+                        if (court.players.some(p => p.id === player.id)) {
+                            const remainingPlayers = court.players.filter(p => p.id !== player.id);
+                            return {
+                                ...court,
+                                players: remainingPlayers,
+                                isActive: remainingPlayers.length === 4
+                            };
+                        }
+                        return court;
+                    }));
+
+                    // 從待命區和排隊區移除該球員
+                    setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
+                    setWaitingQueue(prevQueue => prevQueue
+                        .map(group => ({
+                            ...group,
+                            players: group.players.filter(p => p.id !== player.id)
+                        }))
+                        .filter(group => group.players.length > 0));
+                    return;
+                } else if (targetCourt.players.length === 0) {
+                    // 如果場地是空的，創建新組
+                    setCourts(prevCourts => prevCourts.map(court => {
+                        if (court.id === targetCourtId) {
+                            return {
+                                ...court,
+                                players: [{ ...player, isPlaying: true, isQueuing: false }],
+                                isActive: false
+                            };
+                        }
+                        // 從其他場地移除該球員
+                        if (court.players.some(p => p.id === player.id)) {
+                            const remainingPlayers = court.players.filter(p => p.id !== player.id);
+                            return {
+                                ...court,
+                                players: remainingPlayers,
+                                isActive: remainingPlayers.length === 4
+                            };
+                        }
+                        return court;
+                    }));
+
+                    // 從待命區和排隊區移除該球員
+                    setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
+                    setWaitingQueue(prevQueue => prevQueue
+                        .map(group => ({
+                            ...group,
+                            players: group.players.filter(p => p.id !== player.id)
+                        }))
+                        .filter(group => group.players.length > 0));
+                    return;
                 }
             }
+        }
 
-            // 如果沒有指定目標場地或目標場地不可用，則創建新組到排隊區
-            const newGroup: PlayerGroup = {
-                id: uuidv4(),
-                players: [{ ...player, isQueuing: true, isPlaying: false }],
-                createdAt: new Date(),
-            };
+        // 如果沒有指定目標場地或目標場地不可用，則創建新組到排隊區
+        const newGroup: PlayerGroup = {
+            id: uuidv4(),
+            players: [{ ...player, isQueuing: true, isPlaying: false }],
+            createdAt: new Date(),
+        };
 
-            // 從所有場地中移除該球員
-            const updatedCourts = prevState.courts.map(court => {
-                if (court.players.some(p => p.id === player.id)) {
-                    const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                    return {
-                        ...court,
-                        players: remainingPlayers,
-                        isActive: remainingPlayers.length === 4
-                    };
-                }
-                return court;
-            });
+        // 從所有場地中移除該球員
+        setCourts(prevCourts => prevCourts.map(court => {
+            if (court.players.some(p => p.id === player.id)) {
+                const remainingPlayers = court.players.filter(p => p.id !== player.id);
+                return {
+                    ...court,
+                    players: remainingPlayers,
+                    isActive: remainingPlayers.length === 4
+                };
+            }
+            return court;
+        }));
 
-            // 從待命區移除該球員
-            const updatedStandbyPlayers = prevState.standbyPlayers.filter(p => p.id !== player.id);
+        // 從待命區移除該球員
+        setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
 
-            // 從其他隊伍中移除該球員
-            const updatedWaitingQueue = [
-                ...prevState.waitingQueue.map(group => ({
-                    ...group,
-                    players: group.players.filter(p => p.id !== player.id)
-                })).filter(group => group.players.length > 0),
-                newGroup
-            ];
-
-            return {
-                ...prevState,
-                courts: updatedCourts,
-                waitingQueue: updatedWaitingQueue,
-                standbyPlayers: updatedStandbyPlayers,
-            };
-        });
+        // 從其他隊伍中移除該球員並添加新組
+        setWaitingQueue(prevQueue => [
+            ...prevQueue.map(group => ({
+                ...group,
+                players: group.players.filter(p => p.id !== player.id)
+            })).filter(group => group.players.length > 0),
+            newGroup
+        ]);
 
         // 顯示提示
         setSnackbar({
@@ -969,217 +910,183 @@ export const CourtSystem: React.FC = () => {
 
     // 處理球員拖拽到隊伍
     const handlePlayerDropToGroup = (player: Player, groupId: string) => {
-        setSystemState(prevState => {
-            // 檢查目標組是否已滿
-            const targetGroup = prevState.waitingQueue.find(g => g.id === groupId);
-            if (!targetGroup || targetGroup.players.length >= 4) {
-                setSnackbar({
-                    open: true,
-                    message: t('court.maxPlayersSelected'),
-                    severity: 'error'
-                });
-                return prevState;
-            }
-            // 防止同一球員重複加入同一 group
-            if (targetGroup.players.some(p => p.id === player.id)) {
-                setSnackbar({
-                    open: true,
-                    message: t('court.playerAlreadyInGroup'),
-                    severity: 'warning'
-                });
-                return prevState;
-            }
-            // 從所有場地中移除該球員
-            const updatedCourts = prevState.courts.map(court => {
-                if (court.players.some(p => p.id === player.id)) {
-                    const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                    return {
-                        ...court,
-                        players: remainingPlayers,
-                        isActive: remainingPlayers.length === 4
-                    };
-                }
-                return court;
+        // 檢查目標組是否已滿
+        const targetGroup = waitingQueue.find(g => g.id === groupId);
+        if (!targetGroup || targetGroup.players.length >= 4) {
+            setSnackbar({
+                open: true,
+                message: t('court.maxPlayersSelected'),
+                severity: 'error'
             });
-            const updatedStandbyPlayers = prevState.standbyPlayers.filter(p => p.id !== player.id);
-            const updatedWaitingQueue = prevState.waitingQueue.map(group => {
-                if (group.id === groupId) {
-                    return {
-                        ...group,
-                        players: [...group.players, { ...player, isPlaying: false, isQueuing: true }]
-                    };
-                }
+            return;
+        }
+        // 防止同一球員重複加入同一 group
+        if (targetGroup.players.some(p => p.id === player.id)) {
+            setSnackbar({
+                open: true,
+                message: t('court.playerAlreadyInGroup'),
+                severity: 'warning'
+            });
+            return;
+        }
+        // 從所有場地中移除該球員
+        setCourts(prevCourts => prevCourts.map(court => {
+            if (court.players.some(p => p.id === player.id)) {
+                const remainingPlayers = court.players.filter(p => p.id !== player.id);
+                return {
+                    ...court,
+                    players: remainingPlayers,
+                    isActive: remainingPlayers.length === 4
+                };
+            }
+            return court;
+        }));
+        setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
+        setWaitingQueue(prevQueue => prevQueue.map(group => {
+            if (group.id === groupId) {
                 return {
                     ...group,
-                    players: group.players.filter(p => p.id !== player.id)
+                    players: [...group.players, { ...player, isPlaying: false, isQueuing: true }]
                 };
-            }).filter(group => group.players.length > 0);
+            }
             return {
-                ...prevState,
-                courts: updatedCourts,
-                waitingQueue: updatedWaitingQueue,
-                standbyPlayers: updatedStandbyPlayers,
+                ...group,
+                players: group.players.filter(p => p.id !== player.id)
             };
-        });
+        }).filter(group => group.players.length > 0));
     };
 
     // 處理等待隊列重新排序
     const handleQueueReorder = (dragIndex: number, hoverIndex: number) => {
-        setSystemState(prevState => {
-            const updatedQueue = [...prevState.waitingQueue];
+        setWaitingQueue(prevQueue => {
+            const updatedQueue = [...prevQueue];
             const [draggedGroup] = updatedQueue.splice(dragIndex, 1);
             updatedQueue.splice(hoverIndex, 0, draggedGroup);
-
-            return {
-                ...prevState,
-                waitingQueue: updatedQueue
-            };
+            return updatedQueue;
         });
     };
 
     // 處理場地間組別移動
     const handleCourtGroupMove = (fromCourtId: string, toCourtId: string) => {
-        setSystemState(prevState => {
-            const fromCourt = prevState.courts.find(c => c.id === fromCourtId);
-            const toCourt = prevState.courts.find(c => c.id === toCourtId);
+        const fromCourt = courts.find(c => c.id === fromCourtId);
+        const toCourt = courts.find(c => c.id === toCourtId);
 
-            if (!fromCourt || !toCourt || toCourt.isActive) return prevState;
+        if (!fromCourt || !toCourt || toCourt.isActive) return;
 
-            const updatedCourts = prevState.courts.map(court => {
-                if (court.id === fromCourtId) {
-                    return { ...court, players: [], isActive: false, startTime: undefined };
-                }
-                if (court.id === toCourtId) {
-                    return {
-                        ...court,
-                        players: fromCourt.players,
-                        isActive: true,
-                        startTime: new Date(),
-                    };
-                }
-                return court;
-            });
+        setCourts(prevCourts => prevCourts.map(court => {
+            if (court.id === fromCourtId) {
+                return { ...court, players: [], isActive: false, startTime: undefined };
+            }
+            if (court.id === toCourtId) {
+                return {
+                    ...court,
+                    players: fromCourt.players,
+                    isActive: true,
+                    startTime: new Date(),
+                };
+            }
+            return court;
+        }));
 
-            setSnackbar({
-                open: true,
-                message: t('court.groupMovedToCourt', { court: toCourt.name }),
-                severity: 'success'
-            });
-
-            return {
-                ...prevState,
-                courts: updatedCourts,
-            };
+        setSnackbar({
+            open: true,
+            message: t('court.groupMovedToCourt', { court: toCourt.name }),
+            severity: 'success'
         });
     };
 
     // 處理球員從排隊區移動到待命區
     const handlePlayerMoveToStandby = (player: Player) => {
-        setSystemState(prevState => {
-            // 從排隊區移除該球員
-            const updatedWaitingQueue = prevState.waitingQueue.map(group => ({
-                ...group,
-                players: group.players.filter(p => p.id !== player.id)
-            })).filter(group => group.players.length > 0); // 移除空組
+        // 從排隊區移除該球員
+        setWaitingQueue(prevQueue => prevQueue.map(group => ({
+            ...group,
+            players: group.players.filter(p => p.id !== player.id)
+        })).filter(group => group.players.length > 0)); // 移除空組
 
-            // 將球員添加到待命區
-            const updatedPlayer = { ...player, isQueuing: false, isPlaying: false };
-
-            return {
-                ...prevState,
-                waitingQueue: updatedWaitingQueue,
-                standbyPlayers: [...prevState.standbyPlayers, updatedPlayer],
-            };
-        });
+        // 將球員添加到待命區
+        const updatedPlayer = { ...player, isQueuing: false, isPlaying: false };
+        setStandbyPlayers(prevPlayers => [...prevPlayers, updatedPlayer]);
     };
 
     // 處理自動上場開關
     const handleAutoAssignToggle = () => {
-        setSystemState(prevState => ({
-            ...prevState,
-            autoAssign: !prevState.autoAssign
-        }));
+        setAutoAssign(prev => !prev);
 
         // 顯示提示
         setSnackbar({
             open: true,
-            message: t(systemState.autoAssign ? 'court.autoAssignDisabled' : 'court.autoAssignEnabled'),
+            message: t(autoAssign ? 'court.autoAssignDisabled' : 'court.autoAssignEnabled'),
             severity: 'info'
         });
     };
 
     // 處理組別直接上場
     const handleGroupAssign = (groupId: string, courtId: string) => {
-        setSystemState(prevState => {
-            const group = prevState.waitingQueue.find(g => g.id === groupId);
-            if (!group) return prevState;
-            const court = prevState.courts.find(c => c.id === courtId);
-            if (!court || court.isActive || court.players.length > 0) return prevState;
-            const updatedCourts = prevState.courts.map(c =>
-                c.id === courtId
-                    ? {
-                        ...c,
-                        players: group.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
-                        isActive: group.players.length === 4,
-                        startTime: group.players.length === 4 ? new Date() : undefined,
-                    }
-                    : c
-            );
-            const updatedWaitingQueue = prevState.waitingQueue.filter(g => g.id !== groupId);
-            const names = group.players.map(p => p.name);
-            playCourtTTS(names, String(court.name));
-            setSnackbar({
-                open: true,
-                message: t('court.groupMovedToCourt', { court: court.name }),
-                severity: 'success'
-            });
-            return {
-                ...prevState,
-                courts: updatedCourts,
-                waitingQueue: updatedWaitingQueue,
-            };
+        const group = waitingQueue.find(g => g.id === groupId);
+        if (!group) return;
+        const court = courts.find(c => c.id === courtId);
+        if (!court || court.isActive || court.players.length > 0) return;
+
+        setCourts(prevCourts => prevCourts.map(c =>
+            c.id === courtId
+                ? {
+                    ...c,
+                    players: group.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                    isActive: group.players.length === 4,
+                    startTime: group.players.length === 4 ? new Date() : undefined,
+                }
+                : c
+        ));
+        setWaitingQueue(prevQueue => prevQueue.filter(g => g.id !== groupId));
+        const names = group.players.map(p => p.name);
+        playCourtTTS(names, String(court.name));
+        setSnackbar({
+            open: true,
+            message: t('court.groupMovedToCourt', { court: court.name }),
+            severity: 'success'
         });
     };
 
     // 處理場地組別移動到排隊區
     const handlePlayingGroupToQueue = useCallback((players: Player[]) => {
-        setSystemState(prev => {
-            // 重新取得 fromCourt，避免 closure 問題
-            const fromCourt = prev.courts.find(court =>
-                court.players.some(p => players.some(pl => pl.id === p.id))
-            );
-            if (!fromCourt) return prev;
-            // 移除排隊區所有 group 中重複的球員
-            const cleanedQueue = prev.waitingQueue.map(group => ({
+        // 重新取得 fromCourt，避免 closure 問題
+        const fromCourt = courts.find(court =>
+            court.players.some(p => players.some(pl => pl.id === p.id))
+        );
+        if (!fromCourt) return;
+
+        // 移除排隊區所有 group 中重複的球員
+        setWaitingQueue(prevQueue => {
+            const cleanedQueue = prevQueue.map(group => ({
                 ...group,
                 players: group.players.filter(p => !players.some(pl => pl.id === p.id))
             })).filter(group => group.players.length > 0);
+
             const newGroup: PlayerGroup = {
                 id: uuidv4(),
                 players: players.map(p => ({ ...p, isPlaying: false, isQueuing: true })),
                 createdAt: new Date(),
             };
-            return {
-                ...prev,
-                courts: prev.courts.map(court => {
-                    if (court.id === fromCourt.id) {
-                        return { ...court, players: [], isActive: false, startTime: undefined };
-                    }
-                    return court;
-                }),
-                waitingQueue: [...cleanedQueue, newGroup],
-            };
+            return [...cleanedQueue, newGroup];
         });
+
+        setCourts(prevCourts => prevCourts.map(court => {
+            if (court.id === fromCourt.id) {
+                return { ...court, players: [], isActive: false, startTime: undefined };
+            }
+            return court;
+        }));
+
         setSnackbar({
             open: true,
             message: t('court.groupMovedToQueue'),
             severity: 'info'
         });
-    }, [t]);
+    }, [courts, t]);
 
     // 處理場地組別解散到待命區
     const handleGroupDissolve = (players: Player[]) => {
-        const fromCourt = systemState.courts.find(court =>
+        const fromCourt = courts.find(court =>
             court.players.some(p => players.includes(p))
         );
 
@@ -1204,7 +1111,6 @@ export const CourtSystem: React.FC = () => {
             return [...prev, ...newPlayers];
         });
     };
-
 
     function playTTS(text: string, lang: string = 'zh-TW') {
         if (!ttsEnabled) return Promise.resolve();
@@ -1302,7 +1208,7 @@ export const CourtSystem: React.FC = () => {
                             </Box>
                         </Box>
                         <Grid container spacing={2}>
-                            {systemState.courts.map(court => (
+                            {courts.map(court => (
                                 <Grid item xs={6} sm={6} md={3} key={court.id}>
                                     <Court
                                         court={court}
@@ -1328,7 +1234,7 @@ export const CourtSystem: React.FC = () => {
                                     <Tooltip title={t('court.autoAssign')}>
                                         <IconButton
                                             onClick={handleAutoAssignToggle}
-                                            color={systemState.autoAssign ? "primary" : "default"}
+                                            color={autoAssign ? "primary" : "default"}
                                             size="small"
                                         >
                                             <AutorenewIcon />
@@ -1336,7 +1242,7 @@ export const CourtSystem: React.FC = () => {
                                     </Tooltip>
                                 </Box>
                                 <DroppableQueueArea
-                                    waitingQueue={systemState.waitingQueue}
+                                    waitingQueue={waitingQueue}
                                     onCreateNewGroup={handlePlayerDrop}
                                     onPlayerDropToGroup={handlePlayerDropToGroup}
                                     onQueueReorder={handleQueueReorder}
@@ -1346,11 +1252,11 @@ export const CourtSystem: React.FC = () => {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <StandbyArea
-                                players={systemState.standbyPlayers}
+                                players={standbyPlayers}
                                 onPlayerDrop={handlePlayerDrop}
                                 onPlayerMoveToStandby={handlePlayerMoveToStandby}
                                 onGroupDissolve={handleGroupDissolve}
-                                courts={systemState.courts}
+                                courts={courts}
                             />
                         </Grid>
                     </Grid>
@@ -1381,7 +1287,6 @@ export const CourtSystem: React.FC = () => {
     );
 };
 
-
 const loadPlayersFromStorage = (): Player[] => {
     try {
         const playersJson = localStorage.getItem('players');
@@ -1396,6 +1301,5 @@ const loadPlayersFromStorage = (): Player[] => {
         return [];
     }
 };
-
 
 export default CourtSystem;
