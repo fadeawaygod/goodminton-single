@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/goodminton-single/static/js/main.4fae90ea.js",
+    "main.js": "/goodminton-single/static/js/main.d9bc71cb.js",
     "index.html": "/goodminton-single/index.html",
-    "main.4fae90ea.js.map": "/goodminton-single/static/js/main.4fae90ea.js.map"
+    "main.d9bc71cb.js.map": "/goodminton-single/static/js/main.d9bc71cb.js.map"
   },
   "entrypoints": [
-    "static/js/main.4fae90ea.js"
+    "static/js/main.d9bc71cb.js"
   ]
 }
