@@ -99,7 +99,15 @@
             "standby": "Standby"
         },
         "errors": {
+            "nameRequired": "Player name is required",
             "nameExists": "This player name already exists"
+        },
+        "importFromClipboard": "Import from Clipboard",
+        "importResult": {
+            "success": "Successfully imported {{count}} players",
+            "duplicate": "{{count}} players already exist",
+            "failed": "Import failed. Please ensure each player name is on a new line",
+            "noPlayers": "No players were imported. Please check the clipboard content"
         }
     }
 }

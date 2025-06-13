@@ -30,7 +30,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import { Court as CourtType, Player, PlayerGroup, CourtSystemState } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
 import CourtSettingsDialog from './CourtSettingsDialog';
-import { PlayerListDialog } from './PlayerListDialog';
+import PlayerListDialog from './PlayerListDialog';
 import { DraggablePlayer } from './DraggablePlayer';
 import { useAppSelector } from '../store/hooks';
 import { selectAllPlayers } from '../store/slices/playerSlice';

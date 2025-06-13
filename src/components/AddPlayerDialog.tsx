@@ -11,11 +11,12 @@ import {
     Select,
     MenuItem,
     Box,
+    Alert
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Gender } from '../types/court';
-import { useAppDispatch } from '../store/hooks';
-import { addPlayer } from '../store/slices/playerSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { addPlayer, selectAllPlayers } from '../store/slices/playerSlice';
 
 interface AddPlayerDialogProps {
     open: boolean;
@@ -25,15 +26,37 @@ interface AddPlayerDialogProps {
 export const AddPlayerDialog: React.FC<AddPlayerDialogProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
+    const players = useAppSelector(selectAllPlayers);
 
     const [newPlayer, setNewPlayer] = useState({
         name: '',
         gender: 'male' as Gender,
         level: 7,
     });
+    const [nameError, setNameError] = useState<string | null>(null);
+
+    const validateName = (name: string) => {
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+            setNameError(t('playerList.errors.nameRequired'));
+            return false;
+        }
+        if (players.some(p => p.name === trimmedName)) {
+            setNameError(t('playerList.errors.nameExists'));
+            return false;
+        }
+        setNameError(null);
+        return true;
+    };
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const name = e.target.value;
+        setNewPlayer(prev => ({ ...prev, name }));
+        validateName(name);
+    };
 
     const handleAddPlayer = () => {
-        if (newPlayer.name.trim()) {
+        if (validateName(newPlayer.name)) {
             dispatch(addPlayer({
                 name: newPlayer.name.trim(),
                 gender: newPlayer.gender,
@@ -41,9 +64,10 @@ export const AddPlayerDialog: React.FC<AddPlayerDialogProps> = ({ open, onClose 
             }));
             setNewPlayer({
                 name: '',
-                gender: 'unknown',
-                level: 3,
+                gender: 'male',
+                level: 7,
             });
+            setNameError(null);
             onClose();
         }
     };
@@ -57,7 +81,9 @@ export const AddPlayerDialog: React.FC<AddPlayerDialogProps> = ({ open, onClose 
                         autoFocus
                         label={t('playerList.playerName')}
                         value={newPlayer.name}
-                        onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={handleNameChange}
+                        error={!!nameError}
+                        helperText={nameError}
                         fullWidth
                     />
                     <FormControl fullWidth>
@@ -88,7 +114,12 @@ export const AddPlayerDialog: React.FC<AddPlayerDialogProps> = ({ open, onClose 
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>{t('common.cancel')}</Button>
-                <Button onClick={handleAddPlayer} variant="contained" color="primary">
+                <Button
+                    onClick={handleAddPlayer}
+                    variant="contained"
+                    color="primary"
+                    disabled={!!nameError}
+                >
                     {t('common.create')}
                 </Button>
             </DialogActions>

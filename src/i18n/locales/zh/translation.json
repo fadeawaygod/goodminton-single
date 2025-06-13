@@ -108,7 +108,15 @@
             "standby": "待命中"
         },
         "errors": {
+            "nameRequired": "請輸入球員名稱",
             "nameExists": "此球員名稱已存在"
+        },
+        "importFromClipboard": "從剪貼簿匯入",
+        "importResult": {
+            "success": "成功匯入 {{count}} 位球員",
+            "duplicate": "{{count}} 位球員已存在",
+            "failed": "匯入失敗。請確保每個球員名稱各佔一行",
+            "noPlayers": "沒有匯入任何球員。請檢查剪貼簿內容每行格式應為 1. 球員名稱"
         }
     }
 }
