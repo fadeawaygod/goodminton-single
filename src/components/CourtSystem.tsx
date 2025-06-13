@@ -518,7 +518,7 @@ const DroppableQueueArea: React.FC<{
             role="region"
             aria-label="waiting queue"
             sx={{
-                minHeight: '400px',
+                minHeight: '200px',
                 position: 'relative',
                 backgroundColor: isOver ? 'action.hover' : 'transparent',
                 transition: 'background-color 0.2s',
@@ -540,9 +540,9 @@ const DroppableQueueArea: React.FC<{
                     {t('court.dropToCreateGroup')}
                 </Typography>
             )}
-            <List sx={{ pt: 3 }}>
+            <List sx={{ pt: 1 }}>
                 {waitingQueue.map((group, index) => (
-                    <ListItem key={group.id} sx={{ display: 'block', mb: 3 }}>
+                    <ListItem key={group.id} sx={{ display: 'block', mb: 1 }}>
                         <DraggableGroup
                             group={group}
                             index={index}
