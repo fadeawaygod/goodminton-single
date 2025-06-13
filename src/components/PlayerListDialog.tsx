@@ -13,7 +13,6 @@ import {
     Typography,
     Switch,
     Tooltip,
-    Button,
     Snackbar,
     Alert,
     Stack
@@ -23,8 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { selectAllPlayers, deletePlayer, togglePlayerEnabled, addPlayer } from '../store/slices/playerSlice';
 import { AddPlayerDialog } from './AddPlayerDialog';
-import { v4 as uuidv4 } from 'uuid';
-import { Player } from '../types/court';
 
 interface PlayerListDialogProps {
     open: boolean;
