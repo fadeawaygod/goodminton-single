@@ -706,12 +706,6 @@ export const CourtSystem: React.FC = () => {
         }));
     }, [courts, waitingQueue, autoAssign, standbyPlayers, players]);
 
-    // 確保場地數量與 Redux 中的設定同步
-    useEffect(() => {
-        if (courts.length !== courtCount) {
-            setCourtCount(courtCount);
-        }
-    }, [courtCount, courts.length, setCourtCount]);
 
     useEffect(() => {
         // 當球員列表變化時，更新待命區
