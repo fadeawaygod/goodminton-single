@@ -38,11 +38,11 @@ const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>{t('courtSettings.title')}</DialogTitle>
+            <DialogTitle>{t('settings.courtSettings')}</DialogTitle>
             <DialogContent>
                 <Box sx={{ width: 300, mt: 2 }}>
                     <Typography gutterBottom>
-                        {t('courtSettings.courtCount')}
+                        {t('settings.courtCount')}
                     </Typography>
                     <Slider
                         value={localCourtCount}
