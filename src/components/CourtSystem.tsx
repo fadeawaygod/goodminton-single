@@ -384,8 +384,38 @@ const Court: React.FC<{
     onCreateGroup: (player: Player, courtId: string) => void;
     onGroupAssign: (groupId: string, courtId: string) => void;
     onGroupMove: (fromCourtId: string, toCourtId: string) => void;
-}> = ({ court, onFinishGame, onPlayerDrop, onCreateGroup, onGroupAssign, onGroupMove }) => {
+    onCourtNameChange?: (courtId: string, newName: string) => void;
+}> = ({ court, onFinishGame, onPlayerDrop, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange }) => {
     const { t } = useTranslation();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(court.name);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const handleNameClick = () => {
+        if (!court.isActive && onCourtNameChange) {
+            setIsEditing(true);
+            setEditName(court.name);
+            setTimeout(() => inputRef.current?.focus(), 0);
+        }
+    };
+
+    const handleNameSubmit = () => {
+        if (editName.trim() && editName !== court.name && onCourtNameChange) {
+            onCourtNameChange(court.id, editName.trim());
+        } else {
+            setEditName(court.name);
+        }
+        setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleNameSubmit();
+        } else if (e.key === 'Escape') {
+            setEditName(court.name);
+            setIsEditing(false);
+        }
+    };
 
     const [{ isOver, canDrop }, dropRef] = useDrop(() => ({
         accept: [ItemTypes.PLAYER, ItemTypes.GROUP],
@@ -465,16 +495,44 @@ const Court: React.FC<{
                     alignItems: 'center',
                     mb: 1
                 }}>
-                    <Typography
-                        variant="subtitle1"
-                        sx={{
-                            fontSize: { xs: '0.9rem', sm: '1rem' },
-                            color: hasPlayers ? chameleonColors.primary : 'text.secondary',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        {court.name}
-                    </Typography>
+                    {isEditing && onCourtNameChange ? (
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onBlur={handleNameSubmit}
+                            onKeyDown={handleKeyDown}
+                            style={{
+                                fontSize: 'inherit',
+                                fontFamily: 'inherit',
+                                fontWeight: 'bold',
+                                border: 'none',
+                                background: 'transparent',
+                                padding: '2px 4px',
+                                width: '60px',
+                                color: chameleonColors.primary,
+                                outline: 'none',
+                                borderBottom: `1px solid ${chameleonColors.primary}`,
+                            }}
+                        />
+                    ) : (
+                        <Typography
+                            variant="subtitle1"
+                            onClick={handleNameClick}
+                            sx={{
+                                fontSize: { xs: '0.9rem', sm: '1rem' },
+                                color: hasPlayers ? chameleonColors.primary : 'text.secondary',
+                                fontWeight: 'bold',
+                                cursor: (court.isActive || !onCourtNameChange) ? 'default' : 'pointer',
+                                '&:hover': {
+                                    textDecoration: (court.isActive || !onCourtNameChange) ? 'none' : 'underline',
+                                },
+                            }}
+                        >
+                            {court.name}
+                        </Typography>
+                    )}
                     {hasPlayers && (
                         <Tooltip title={t('court.finishGame')} placement="top">
                             <IconButton
@@ -866,7 +924,6 @@ export const CourtSystem: React.FC = () => {
 
     // 當自動分配開啟時檢查是否可以安排球員上場
     useEffect(() => {
-        console.log('autoAssign', autoAssign);
         if (autoAssign) {
             checkAndAssignCourt();
         }
@@ -1221,6 +1278,15 @@ export const CourtSystem: React.FC = () => {
         }
     }, [autoAssign, waitingQueue, courts, handleGroupAssign, courtCount]);  // 添加 courtCount 依賴
 
+    // 處理場地名稱修改
+    const handleCourtNameChange = useCallback((courtId: string, newName: string) => {
+        setCourts(prevCourts => prevCourts.map(court =>
+            court.id === courtId
+                ? { ...court, name: newName }
+                : court
+        ));
+    }, []);
+
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
             <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} courtCount={courtCount} setCourtCount={setCourtCount} />
@@ -1273,6 +1339,7 @@ export const CourtSystem: React.FC = () => {
                                         onCreateGroup={handlePlayerDrop}
                                         onGroupAssign={handleGroupAssign}
                                         onGroupMove={handleCourtGroupMove}
+                                        onCourtNameChange={handleCourtNameChange}
                                     />
                                 </Grid>
                             ))}
