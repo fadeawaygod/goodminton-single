@@ -862,7 +862,7 @@ export const CourtSystem: React.FC = () => {
             message: t('court.groupMovedToCourt', { court: emptyCourt.name }),
             severity: 'success'
         });
-    }, [t, courts, waitingQueue]);
+    }, [t, courts, waitingQueue, playCourtTTS]);
 
     // 當自動分配開啟時檢查是否可以安排球員上場
     useEffect(() => {
