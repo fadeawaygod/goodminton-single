@@ -27,7 +27,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { MultiBackend, TouchTransition, Preview } from 'react-dnd-multi-backend';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import { Court as CourtType, Player, PlayerGroup, CourtSystemState } from '../types/court';
+import { Court as CourtType, Player, PlayerGroup } from '../types/court';
 import { v4 as uuidv4 } from 'uuid';
 import CourtSettingsDialog from './CourtSettingsDialog';
 import PlayerListDialog from './PlayerListDialog';
@@ -1025,31 +1025,39 @@ export const CourtSystem: React.FC = () => {
     };
 
     // 處理組別直接上場
-    const handleGroupAssign = (groupId: string, courtId: string) => {
+    const handleGroupAssign = useCallback((groupId: string, courtId: string) => {
         const group = waitingQueue.find(g => g.id === groupId);
-        if (!group) return;
         const court = courts.find(c => c.id === courtId);
-        if (!court || court.isActive || court.players.length > 0) return;
+        if (!group || !court || court.isActive) return;
 
-        setCourts(prevCourts => prevCourts.map(c =>
-            c.id === courtId
+        // 更新場地狀態
+        setCourts(prevCourts => prevCourts.map(court =>
+            court.id === courtId
                 ? {
-                    ...c,
+                    ...court,
                     players: group.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
-                    isActive: group.players.length === 4,
-                    startTime: group.players.length === 4 ? new Date() : undefined,
+                    isActive: true,
+                    startTime: new Date(),
                 }
-                : c
+                : court
         ));
+
+        // 從等待隊列中移除該組
         setWaitingQueue(prevQueue => prevQueue.filter(g => g.id !== groupId));
-        const names = group.players.map(p => p.name);
-        playCourtTTS(names, String(court.name));
+
+        // 播放語音提示
+        const playerNames = group.players.map(p => p.name);
+        const courtNumber = court.name;
+        const lang = i18n.language === 'zh-TW' || i18n.language === 'zh' ? 'zh-TW' : 'en';
+        playCourtTTS(playerNames, courtNumber, lang);
+
+        // 顯示提示
         setSnackbar({
             open: true,
-            message: t('court.groupMovedToCourt', { court: court.name }),
+            message: t('court.groupAssigned', { court: court.name }),
             severity: 'success'
         });
-    };
+    }, [waitingQueue, courts, playCourtTTS, t, i18n.language]);
 
     // 處理場地組別移動到排隊區
     const handlePlayingGroupToQueue = useCallback((players: Player[]) => {
@@ -1168,6 +1176,19 @@ export const CourtSystem: React.FC = () => {
             });
         }
     }
+
+    // 自動分配效果
+    useEffect(() => {
+        if (autoAssign && waitingQueue.length > 0) {
+            const availableCourts = courts.filter(court => !court.isActive);
+            if (availableCourts.length > 0) {
+                const nextGroup = waitingQueue[0];
+                if (nextGroup.players.length === 4) {
+                    handleGroupAssign(nextGroup.id, availableCourts[0].id);
+                }
+            }
+        }
+    }, [autoAssign, waitingQueue, courts, handleGroupAssign, courtCount]);  // 添加 courtCount 依賴
 
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
@@ -1291,19 +1312,5 @@ export const CourtSystem: React.FC = () => {
     );
 };
 
-const loadPlayersFromStorage = (): Player[] => {
-    try {
-        const playersJson = localStorage.getItem('players');
-        if (!playersJson) return [];
-        const players = JSON.parse(playersJson);
-        if (!Array.isArray(players)) return [];
-        return players.map((p: Player) => ({
-            ...p,
-        }));
-    } catch (e) {
-        console.error('Failed to parse players from localStorage:', e);
-        return [];
-    }
-};
 
 export default CourtSystem;
