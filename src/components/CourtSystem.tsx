@@ -355,8 +355,13 @@ const CourtGroup: React.FC<{
                     <DragIndicatorIcon fontSize="small" />
                     <Typography variant="caption">
                         {t('court.playing')}
-                        {players.length === 4 ? formatTime(timeElapsed) : ""}
                     </Typography>
+                    {
+                        players.length === 4 &&
+                        <Typography variant="caption">
+                            {formatTime(timeElapsed)}
+                        </Typography>
+                    }
                 </Box>
                 <Box sx={{
                     display: 'flex',
