@@ -35,6 +35,14 @@ import { DraggablePlayer } from './DraggablePlayer';
 import { useAppSelector } from '../store/hooks';
 import { selectAllPlayers } from '../store/slices/playerSlice';
 
+// Format milliseconds to MM:SS
+const formatTime = (ms: number): string => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 // 定義拖拽類型
 const ItemTypes = {
     PLAYER: 'player',
@@ -260,6 +268,22 @@ const CourtGroup: React.FC<{
     courtId: string;
 }> = ({ players, courtId }) => {
     const { t } = useTranslation();
+    const [timeElapsed, setTimeElapsed] = useState<number>(0);
+    const startTimeRef = useRef<Date>(new Date());
+
+    // 當球員數量變化時重置計時器
+    useEffect(() => {
+        startTimeRef.current = new Date();
+        setTimeElapsed(0);
+    }, [players.length]);
+
+    // 計時器
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimeElapsed(Date.now() - startTimeRef.current.getTime());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []); // 只在組件掛載時啟動計時器
 
     const [{ isDragging }, dragRef, preview] = useDrag(() => ({
         type: ItemTypes.GROUP,
@@ -331,6 +355,7 @@ const CourtGroup: React.FC<{
                     <DragIndicatorIcon fontSize="small" />
                     <Typography variant="caption">
                         {t('court.playing')}
+                        {players.length === 4 ? formatTime(timeElapsed) : ""}
                     </Typography>
                 </Box>
                 <Box sx={{
