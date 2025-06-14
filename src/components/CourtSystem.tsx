@@ -655,6 +655,100 @@ export const CourtSystem: React.FC = () => {
         severity: 'success' | 'info' | 'warning' | 'error';
     }>({ open: false, message: '', severity: 'info' });
 
+    // 基礎 TTS 函數
+    const playTTS = useCallback((text: string, lang: string = 'zh-TW') => {
+        if (!ttsEnabled) return Promise.resolve();
+        return new Promise<void>((resolve, reject) => {
+            if (!window.speechSynthesis) {
+                setSnackbar({
+                    open: true,
+                    message: '瀏覽器不支援語音合成',
+                    severity: 'error'
+                });
+                reject();
+                return;
+            }
+
+            // 創建語音實例
+            const utterance = new window.SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            utterance.onend = () => resolve();
+            utterance.onerror = (event: Event) => reject(event);
+
+            // 設置語音
+            const availableVoices = window.speechSynthesis.getVoices();
+            const selectedVoice = availableVoices.find(v => v.lang === lang);
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+
+            // 播放語音
+            window.speechSynthesis.speak(utterance);
+        });
+    }, [ttsEnabled, setSnackbar]);
+
+    // 場地 TTS 函數
+    const playCourtTTS = useCallback(async (names: string[], number: string, lang?: string) => {
+        if (!ttsEnabled) return;
+        try {
+            // 確定語言
+            const ttsLang = lang || (i18n.language === 'zh-TW' || i18n.language === 'zh' ? 'zh-TW' : 'en');
+
+            // 生成消息
+            const msg = t('court.ttsCallToCourt', {
+                names: names.join('、'),
+                number: number
+            });
+
+            // 播放語音
+            await playTTS(msg, ttsLang);
+        } catch (e) {
+            setSnackbar({
+                open: true,
+                message: '語音服務暫時無法使用，請稍後再試',
+                severity: 'error'
+            });
+        }
+    }, [ttsEnabled, i18n.language, t, playTTS, setSnackbar]);
+
+    // 處理組別直接上場
+    const handleGroupAssign = useCallback((groupId: string, courtId: string) => {
+        const group = waitingQueue.find(g => g.id === groupId);
+        const court = courts.find(c => c.id === courtId);
+        if (!group || !court || court.isActive) return;
+
+        // 更新場地狀態
+        setCourts(prevCourts => prevCourts.map(court =>
+            court.id === courtId
+                ? {
+                    ...court,
+                    players: group.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                    isActive: true,
+                    startTime: new Date(),
+                }
+                : court
+        ));
+
+        // 從等待隊列中移除該組
+        setWaitingQueue(prevQueue => prevQueue.filter(g => g.id !== groupId));
+
+        // 播放語音提示
+        const playerNames = group.players.map(p => p.name);
+        const courtNumber = court.name;
+        const ttsLang = i18n.language === 'zh-TW' || i18n.language === 'zh' ? 'zh-TW' : 'en';
+        playCourtTTS(playerNames, courtNumber, ttsLang);
+
+        // 顯示提示
+        setSnackbar({
+            open: true,
+            message: t('court.groupAssigned', { court: court.name }),
+            severity: 'success'
+        });
+    }, [waitingQueue, courts, playCourtTTS, t, i18n.language, setSnackbar]);
+
     // 初始場地設置
     useEffect(() => {
         const initialCourts = Array(courtCount).fill(null).map((_, i) => ({
@@ -665,7 +759,7 @@ export const CourtSystem: React.FC = () => {
             isActive: false,
         }));
         setCourts(initialCourts);
-    }, []); // 只在組件掛載時執行一次
+    }, [courtCount]);
 
     // 監聽 courtCount 變化並調整 courts 陣列
     useEffect(() => {
@@ -1024,41 +1118,6 @@ export const CourtSystem: React.FC = () => {
         });
     };
 
-    // 處理組別直接上場
-    const handleGroupAssign = useCallback((groupId: string, courtId: string) => {
-        const group = waitingQueue.find(g => g.id === groupId);
-        const court = courts.find(c => c.id === courtId);
-        if (!group || !court || court.isActive) return;
-
-        // 更新場地狀態
-        setCourts(prevCourts => prevCourts.map(court =>
-            court.id === courtId
-                ? {
-                    ...court,
-                    players: group.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
-                    isActive: true,
-                    startTime: new Date(),
-                }
-                : court
-        ));
-
-        // 從等待隊列中移除該組
-        setWaitingQueue(prevQueue => prevQueue.filter(g => g.id !== groupId));
-
-        // 播放語音提示
-        const playerNames = group.players.map(p => p.name);
-        const courtNumber = court.name;
-        const lang = i18n.language === 'zh-TW' || i18n.language === 'zh' ? 'zh-TW' : 'en';
-        playCourtTTS(playerNames, courtNumber, lang);
-
-        // 顯示提示
-        setSnackbar({
-            open: true,
-            message: t('court.groupAssigned', { court: court.name }),
-            severity: 'success'
-        });
-    }, [waitingQueue, courts, playCourtTTS, t, i18n.language]);
-
     // 處理場地組別移動到排隊區
     const handlePlayingGroupToQueue = useCallback((players: Player[]) => {
         // 重新取得 fromCourt，避免 closure 問題
@@ -1123,59 +1182,6 @@ export const CourtSystem: React.FC = () => {
             return [...prev, ...newPlayers];
         });
     };
-
-    function playTTS(text: string, lang: string = 'zh-TW') {
-        if (!ttsEnabled) return Promise.resolve();
-        return new Promise<void>((resolve, reject) => {
-            if (!window.speechSynthesis) {
-                setSnackbar && setSnackbar({
-                    open: true,
-                    message: '瀏覽器不支援語音合成',
-                    severity: 'error'
-                });
-                reject();
-                return;
-            }
-            const utter = new window.SpeechSynthesisUtterance(text);
-            utter.lang = lang;
-            utter.rate = 1;
-            utter.pitch = 1;
-            utter.volume = 1;
-            utter.onend = () => resolve();
-            utter.onerror = (e) => reject(e);
-            const voices = window.speechSynthesis.getVoices();
-            if (voices && voices.length > 0) {
-                const match = voices.find(v => v.lang === lang);
-                if (match) utter.voice = match;
-            }
-            window.speechSynthesis.speak(utter);
-        });
-    }
-    async function playCourtTTS(names: string[], number: string, lang?: string) {
-        if (!ttsEnabled) return;
-        try {
-            // 根據 i18n.language 自動切換語音語言
-            let ttsLang = lang;
-            if (!ttsLang) {
-                if (i18n.language === 'zh-TW' || i18n.language === 'zh') {
-                    ttsLang = 'zh-TW';
-                } else {
-                    ttsLang = 'en';
-                }
-            }
-            const msg = t('court.ttsCallToCourt', {
-                names: names.join('、'),
-                number: number
-            });
-            await playTTS(msg, ttsLang);
-        } catch (e) {
-            setSnackbar && setSnackbar({
-                open: true,
-                message: '語音服務暫時無法使用，請稍後再試',
-                severity: 'error'
-            });
-        }
-    }
 
     // 自動分配效果
     useEffect(() => {
