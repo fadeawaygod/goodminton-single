@@ -82,23 +82,25 @@
         "title": "Player List",
         "addPlayer": "Add Player",
         "addNewPlayer": "Add New Player",
+        "editPlayer": "Edit Player",
         "playerName": "Player Name",
-        "gender": "Gender",
-        "genders": {
-            "male": "Male",
-            "female": "Female",
-            "unknown": "Unspecified"
-        },
+        "newPlayerNamePlaceholder": "Enter player name",
         "level": "Level",
-        "levelHelp": "1 for beginner, 14 for top player",
-        "labels": "Labels",
-        "addLabel": "Add Label",
-        "add": "Add",
+        "gender": "Gender",
+        "male": "Male",
+        "female": "Female",
+        "unknown": "Unknown",
+        "gamesPlayed": "Games Played",
+        "games": "games",
+        "playerUpdated": "Player information updated",
         "status": {
             "playing": "Playing",
             "waiting": "Waiting",
             "standby": "Standby"
         },
+        "labels": "Labels",
+        "addLabel": "Add Label",
+        "add": "Add",
         "errors": {
             "nameRequired": "Player name is required",
             "nameExists": "This player name already exists"

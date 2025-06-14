@@ -17,6 +17,14 @@ interface AddPlayerPayload {
     level: number;
 }
 
+interface UpdatePlayerPayload {
+    id: string;
+    name?: string;
+    gender?: Gender;
+    level?: number;
+    gamesPlayed?: number;
+}
+
 export const playerSlice = createSlice({
     name: 'players',
     initialState,
@@ -39,6 +47,9 @@ export const playerSlice = createSlice({
             const player = state.players.find(p => p.id === action.payload);
             if (player && !player.isPlaying && !player.isQueuing) {
                 player.enabled = !player.enabled;
+                if (!player.enabled) {
+                    player.gamesPlayed = 0;
+                }
             }
         },
         updatePlayerStatus: (state, action: PayloadAction<{ id: string; isPlaying: boolean; isQueuing: boolean }>) => {
@@ -59,6 +70,15 @@ export const playerSlice = createSlice({
             if (player) {
                 player.gamesPlayed = 0;
             }
+        },
+        updatePlayer: (state, action: PayloadAction<UpdatePlayerPayload>) => {
+            const player = state.players.find(p => p.id === action.payload.id);
+            if (player && !player.isPlaying && !player.isQueuing) {
+                if (action.payload.name !== undefined) player.name = action.payload.name;
+                if (action.payload.gender !== undefined) player.gender = action.payload.gender;
+                if (action.payload.level !== undefined) player.level = action.payload.level;
+                if (action.payload.gamesPlayed !== undefined) player.gamesPlayed = action.payload.gamesPlayed;
+            }
         }
     }
 });
@@ -69,7 +89,8 @@ export const {
     togglePlayerEnabled,
     updatePlayerStatus,
     updatePlayerGameCount,
-    resetPlayerGameCount
+    resetPlayerGameCount,
+    updatePlayer
 } = playerSlice.actions;
 
 // Selectors

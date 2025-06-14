@@ -120,7 +120,8 @@ const DraggableGroup: React.FC<{
     index: number;
     onPlayerDrop: (player: Player) => void;
     onGroupMove: (dragIndex: number, hoverIndex: number) => void;
-}> = ({ group, index, onPlayerDrop, onGroupMove }) => {
+    onPlayerUpdate: (player: Player) => void;
+}> = ({ group, index, onPlayerDrop, onGroupMove, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const dropTargetRef = useRef<HTMLDivElement>(null);
 
@@ -254,6 +255,7 @@ const DraggableGroup: React.FC<{
                         <DraggablePlayer
                             key={player.id}
                             player={player}
+                            onPlayerUpdate={onPlayerUpdate}
                         />
                     ))}
                 </Box>
@@ -266,7 +268,8 @@ const DraggableGroup: React.FC<{
 const CourtGroup: React.FC<{
     players: Player[];
     courtId: string;
-}> = ({ players, courtId }) => {
+    onPlayerUpdate: (player: Player) => void;
+}> = ({ players, courtId, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const [timeElapsed, setTimeElapsed] = useState<number>(0);
     const startTimeRef = useRef<Date>(new Date());
@@ -373,6 +376,7 @@ const CourtGroup: React.FC<{
                         <DraggablePlayer
                             key={player.id}
                             player={player}
+                            onPlayerUpdate={onPlayerUpdate}
                         />
                     ))}
                 </Box>
@@ -390,7 +394,8 @@ const Court: React.FC<{
     onGroupAssign: (groupId: string, courtId: string) => void;
     onGroupMove: (fromCourtId: string, toCourtId: string) => void;
     onCourtNameChange?: (courtId: string, newName: string) => void;
-}> = ({ court, onFinishGame, onPlayerDrop, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange }) => {
+    onPlayerUpdate: (player: Player) => void;
+}> = ({ court, onFinishGame, onPlayerDrop, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(court.name);
@@ -563,6 +568,7 @@ const Court: React.FC<{
                         <CourtGroup
                             players={court.players}
                             courtId={court.id}
+                            onPlayerUpdate={onPlayerUpdate}
                         />
                     </Box>
                 )}
@@ -578,7 +584,8 @@ const DroppableQueueArea: React.FC<{
     onPlayerDropToGroup: (player: Player, groupId: string) => void;
     onQueueReorder: (dragIndex: number, hoverIndex: number) => void;
     onPlayingGroupDrop: (players: Player[]) => void;
-}> = ({ waitingQueue, onCreateNewGroup, onPlayerDropToGroup, onQueueReorder, onPlayingGroupDrop }) => {
+    onPlayerUpdate: (player: Player) => void;
+}> = ({ waitingQueue, onCreateNewGroup, onPlayerDropToGroup, onQueueReorder, onPlayingGroupDrop, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const [{ isOver }, dropRef] = useDrop(() => ({
         accept: [ItemTypes.PLAYER, ItemTypes.GROUP],
@@ -636,6 +643,7 @@ const DroppableQueueArea: React.FC<{
                             index={index}
                             onPlayerDrop={(player) => onPlayerDropToGroup(player, group.id)}
                             onGroupMove={onQueueReorder}
+                            onPlayerUpdate={onPlayerUpdate}
                         />
                     </ListItem>
                 ))}
@@ -651,7 +659,8 @@ const StandbyArea: React.FC<{
     onPlayerMoveToStandby: (player: Player) => void;
     onGroupDissolve: (players: Player[]) => void;
     courts: CourtType[];
-}> = ({ players, onPlayerDrop, onPlayerMoveToStandby, onGroupDissolve, courts }) => {
+    onPlayerUpdate: (player: Player) => void;
+}> = ({ players, onPlayerDrop, onPlayerMoveToStandby, onGroupDissolve, courts, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const dropTargetRef = useRef<HTMLDivElement>(null);
 
@@ -718,6 +727,7 @@ const StandbyArea: React.FC<{
                     <DraggablePlayer
                         key={player.id}
                         player={player}
+                        onPlayerUpdate={onPlayerUpdate}
                     />
                 ))}
             </Box>
@@ -1299,6 +1309,35 @@ export const CourtSystem: React.FC = () => {
         ));
     }, []);
 
+    // 處理球員更新
+    const handlePlayerUpdate = useCallback((updatedPlayer: Player) => {
+        // 更新所有相關狀態中的球員資訊
+        setCourts(prevCourts => prevCourts.map(court => ({
+            ...court,
+            players: court.players.map(p =>
+                p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+            )
+        })));
+
+        setWaitingQueue(prevQueue => prevQueue.map(group => ({
+            ...group,
+            players: group.players.map(p =>
+                p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+            )
+        })));
+
+        setStandbyPlayers(prevPlayers => prevPlayers.map(p =>
+            p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+        ));
+
+        // 顯示提示
+        setSnackbar({
+            open: true,
+            message: t('playerList.playerUpdated'),
+            severity: 'success'
+        });
+    }, [t]);
+
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
             <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} courtCount={courtCount} setCourtCount={setCourtCount} />
@@ -1352,6 +1391,7 @@ export const CourtSystem: React.FC = () => {
                                         onGroupAssign={handleGroupAssign}
                                         onGroupMove={handleCourtGroupMove}
                                         onCourtNameChange={handleCourtNameChange}
+                                        onPlayerUpdate={handlePlayerUpdate}
                                     />
                                 </Grid>
                             ))}
@@ -1382,6 +1422,7 @@ export const CourtSystem: React.FC = () => {
                                     onPlayerDropToGroup={handlePlayerDropToGroup}
                                     onQueueReorder={handleQueueReorder}
                                     onPlayingGroupDrop={handlePlayingGroupToQueue}
+                                    onPlayerUpdate={handlePlayerUpdate}
                                 />
                             </Paper>
                         </Grid>
@@ -1392,6 +1433,7 @@ export const CourtSystem: React.FC = () => {
                                 onPlayerMoveToStandby={handlePlayerMoveToStandby}
                                 onGroupDissolve={handleGroupDissolve}
                                 courts={courts}
+                                onPlayerUpdate={handlePlayerUpdate}
                             />
                         </Grid>
                     </Grid>

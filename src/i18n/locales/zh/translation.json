@@ -91,23 +91,31 @@
         "title": "球員列表",
         "addPlayer": "新增球員",
         "addNewPlayer": "新增球員",
+        "editPlayer": "編輯球員",
         "playerName": "球員名稱",
-        "gender": "性別",
-        "genders": {
-            "male": "男",
-            "female": "女",
-            "unknown": "不指定"
-        },
+        "newPlayerNamePlaceholder": "輸入球員名稱",
         "level": "等級",
-        "levelHelp": "1為初學者，14為頂尖選手",
-        "labels": "標籤",
-        "addLabel": "新增標籤",
-        "add": "新增",
+        "gender": "性別",
+        "male": "男",
+        "female": "女",
+        "unknown": "未知",
+        "gamesPlayed": "已比賽場次",
+        "games": "場",
+        "playerUpdated": "球員資訊已更新",
         "status": {
             "playing": "場上比賽中",
             "waiting": "等待中",
             "standby": "待命中"
         },
+        "genders": {
+            "male": "男",
+            "female": "女",
+            "unknown": "不指定"
+        },
+        "levelHelp": "1為初學者，14為頂尖選手",
+        "labels": "標籤",
+        "addLabel": "新增標籤",
+        "add": "新增",
         "errors": {
             "nameRequired": "請輸入球員名稱",
             "nameExists": "此球員名稱已存在"
