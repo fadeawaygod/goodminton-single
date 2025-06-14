@@ -832,28 +832,16 @@ export const CourtSystem: React.FC = () => {
         });
     }, [waitingQueue, courts, playCourtTTS, t, i18n.language, setSnackbar]);
 
-    // 初始場地設置
-    useEffect(() => {
-        const initialCourts = Array(courtCount).fill(null).map((_, i) => ({
-            id: uuidv4(),
-            name: `${i + 1}`,
-            players: [],
-            maxPlayers: 4,
-            isActive: false,
-        }));
-        setCourts(initialCourts);
-    }, [courtCount]);
-
     // 監聽 courtCount 變化並調整 courts 陣列
     useEffect(() => {
         setCourts(prevCourts => {
             if (courtCount > prevCourts.length) {
-                // 擴充陣列 - 添加新的 court 物件
+                // 擴充陣列 - 添加新的 court 物件，保留現有場地的名稱
                 const newCourts = [...prevCourts];
                 for (let i = prevCourts.length; i < courtCount; i++) {
                     newCourts.push({
                         id: uuidv4(),
-                        name: `${i + 1}`,
+                        name: `${i + 1}`,  // 新場地使用數字名稱
                         players: [],
                         maxPlayers: 4,
                         isActive: false,
@@ -861,13 +849,31 @@ export const CourtSystem: React.FC = () => {
                 }
                 return newCourts;
             } else if (courtCount < prevCourts.length) {
-                // 縮減陣列 - 移除多餘的 court 物件
-                return prevCourts.slice(0, courtCount);
+                // 縮減陣列 - 移除多餘的 court 物件，保留前 N 個場地
+                return prevCourts.slice(0, courtCount).map(court => ({
+                    ...court,
+                    players: [],  // 清空被保留場地的球員
+                    isActive: false,  // 重置活動狀態
+                }));
             }
             // 如果數量不變，返回原陣列
             return prevCourts;
         });
     }, [courtCount]); // 只在 courtCount 變化時執行
+
+    // 初始場地設置 - 只在組件首次掛載時執行
+    useEffect(() => {
+        if (courts.length === 0) {  // 只在沒有場地時初始化
+            const initialCourts = Array(courtCount).fill(null).map((_, i) => ({
+                id: uuidv4(),
+                name: `${i + 1}`,
+                players: [],
+                maxPlayers: 4,
+                isActive: false,
+            }));
+            setCourts(initialCourts);
+        }
+    }, []); // 空依賴數組，只在組件掛載時執行一次
 
     useEffect(() => {
         //TODO: 更新等待隊列和場地狀態
