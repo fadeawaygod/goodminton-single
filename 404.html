@@ -11,15 +11,20 @@
       const search = window.location.search;
       const hash = window.location.hash;
       
-      // 檢查是否已經在 index.html 路徑下
-      if (path.includes('/index.html')) {
-        // 如果已經包含 index.html，直接重定向到根目錄
-        window.location.href = '/goodminton-single/' + search + hash;
-      } else {
-        // 移除 /goodminton-single 前綴，重定向到 index.html
-        const cleanPath = path.replace('/goodminton-single', '');
-        window.location.href = '/goodminton-single/index.html' + cleanPath + search + hash;
+      // 檢查是否已經重定向過（避免無限循環）
+      if (sessionStorage.getItem('redirected') === 'true') {
+        // 如果已經重定向過，清除標記並顯示錯誤頁面
+        sessionStorage.removeItem('redirected');
+        document.body.innerHTML = '<h1>Page Not Found</h1><p>The page you are looking for does not exist.</p><a href="/goodminton-single/">Go to Home</a>';
+        return;
       }
+      
+      // 設置重定向標記
+      sessionStorage.setItem('redirected', 'true');
+      
+      // 移除 /goodminton-single 前綴，重定向到 index.html
+      const cleanPath = path.replace('/goodminton-single', '');
+      window.location.href = '/goodminton-single' + cleanPath + search + hash;
     </script>
   </body>
 </html> 
