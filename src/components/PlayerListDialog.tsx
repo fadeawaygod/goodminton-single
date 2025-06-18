@@ -189,17 +189,27 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                         {t('playerList.title')}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title={t('playerList.deleteAllPlayers')}>
+                        {players.length > 0 ? (
+                            <Tooltip title={t('playerList.deleteAllPlayers')}>
+                                <Fab
+                                    size="small"
+                                    color="error"
+                                    onClick={handleDeleteAllPlayers}
+                                    sx={{ boxShadow: 1 }}
+                                >
+                                    <DeleteIcon />
+                                </Fab>
+                            </Tooltip>
+                        ) : (
                             <Fab
                                 size="small"
                                 color="error"
-                                onClick={handleDeleteAllPlayers}
+                                disabled
                                 sx={{ boxShadow: 1 }}
-                                disabled={players.length === 0}
                             >
                                 <DeleteIcon />
                             </Fab>
-                        </Tooltip>
+                        )}
                         <Tooltip title={t('playerList.importFromClipboard')}>
                             <Fab
                                 size="small"
@@ -235,26 +245,45 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                                             onChange={() => handleToggleEnabled(player.id)}
                                             disabled={player.isPlaying || player.isQueuing}
                                         />
-                                        <Tooltip title={t('playerList.editPlayer')}>
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="edit"
-                                                onClick={() => handleEditPlayer(player)}
-                                                disabled={player.isPlaying || player.isQueuing}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title={t('playerList.deletePlayer', '刪除球員')}>
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="delete"
-                                                onClick={() => handleDeletePlayer(player.id)}
-                                                disabled={player.isPlaying || player.isQueuing}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Tooltip>
+                                        {!(player.isPlaying || player.isQueuing) ? (
+                                            <>
+                                                <Tooltip title={t('playerList.editPlayer')}>
+                                                    <IconButton
+                                                        edge="end"
+                                                        aria-label="edit"
+                                                        onClick={() => handleEditPlayer(player)}
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title={t('playerList.deletePlayer', '刪除球員')}>
+                                                    <IconButton
+                                                        edge="end"
+                                                        aria-label="delete"
+                                                        onClick={() => handleDeletePlayer(player.id)}
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="edit"
+                                                    disabled
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    disabled
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </>
+                                        )}
                                     </Box>
                                 }
                             >
