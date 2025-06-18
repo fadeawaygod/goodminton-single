@@ -1170,6 +1170,9 @@ export const CourtSystem: React.FC = () => {
     };
 
     const handlePlayerMoveToStandby = (player: Player) => {
+        if (standbyPlayers.find(p => p.name == player.name)) {
+            return
+        }
         if (player?.group?.court) {
             //remove player from group
             setCourts(prevCourts => prevCourts.map(court => {
@@ -1205,7 +1208,7 @@ export const CourtSystem: React.FC = () => {
         player.group = undefined
 
         // 將球員添加到待命區
-        const updatedPlayer = { ...player, isQueuing: false, isPlaying: false };
+        const updatedPlayer = { ...player, isQueuing: false, isPlaying: false, group: undefined };
         setStandbyPlayers(prevPlayers => [...prevPlayers, updatedPlayer]);
     };
 
