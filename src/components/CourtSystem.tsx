@@ -294,6 +294,7 @@ const CourtGroup: React.FC<{
             type: ItemTypes.GROUP,
             players: group?.players,
             fromCourtId: courtId,
+            group: group,
             isPlayingGroup: true
         },
         collect: (monitor) => ({
@@ -598,7 +599,7 @@ const DroppableQueueArea: React.FC<{
                     onCreateNewGroup(item);
                 } else if (item.type === ItemTypes.GROUP && item.isPlayingGroup) {
                     // 允許場地上的 group 拖曳到排隊區
-                    onPlayingGroupDrop(item.players);
+                    onPlayingGroupDrop(item.group);
                 }
             }
             return {};
@@ -820,7 +821,7 @@ export const CourtSystem: React.FC = () => {
             court.id === courtId
                 ? {
                     ...court,
-                    players: group.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                    group: group,
                     isActive: true,
                     startTime: new Date(),
                 }
@@ -835,6 +836,8 @@ export const CourtSystem: React.FC = () => {
         const courtNumber = court.name;
         const ttsLang = i18n.language === 'zh-TW' || i18n.language === 'zh' ? 'zh-TW' : 'en';
         playCourtTTS(playerNames, courtNumber, ttsLang);
+
+        group.court = court;
 
         // 顯示提示
         setSnackbar({
@@ -923,6 +926,8 @@ export const CourtSystem: React.FC = () => {
         if (!emptyCourt) return;
 
         const nextGroup = waitingQueue[0];
+        emptyCourt.group = nextGroup
+        nextGroup.court = emptyCourt
 
         // 更新場地狀態
         setCourts(prevCourts => prevCourts.map(court =>
@@ -1142,7 +1147,8 @@ export const CourtSystem: React.FC = () => {
                     ...court,
                     group: {
                         ...fromCourt.group!,
-                        players: fromCourt.group!.players.map(p => ({ ...p, isPlaying: true, isQueuing: false }))
+                        players: fromCourt.group!.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                        court: court
                     },
                     isActive: true,
                 };
@@ -1212,29 +1218,20 @@ export const CourtSystem: React.FC = () => {
     // 處理場地組別移動到排隊區
     const handlePlayingGroupToQueue = useCallback((group: PlayerGroup) => {
         // 移除排隊區所有 group 中重複的球員
-        setWaitingQueue(prevQueue => {
-            const cleanedQueue = prevQueue.map(group => ({
-                ...group,
-                players: group.players.filter(p => !players.some(pl => pl.id === p.id))
-            })).filter(group => group.players.length > 0);
+        if (group.court) {
+            setCourts(prevCourts => prevCourts.map(c =>
+                c.id === group.court?.id
+                    ? { ...c, group: undefined, isActive: false }
+                    : c
+            ));
+            group.court = undefined
 
-            const newGroup: PlayerGroup = {
-                id: uuidv4(),
-                players: players.map(p => ({ ...p, isPlaying: false, isQueuing: true })),
-                createdAt: new Date(),
-                court: undefined
-            };
-            return [...cleanedQueue, newGroup];
+        }
+        setWaitingQueue(prevQueue => {
+            return [...prevQueue, group];
         });
 
-        if (group.court) {
-            setCourts(prevCourts => prevCourts.map(court => {
-                if (court.id === group.court?.id) {
-                    return { ...court, group: undefined, isActive: false };
-                }
-                return court;
-            }));
-        }
+
 
         setSnackbar({
             open: true,
