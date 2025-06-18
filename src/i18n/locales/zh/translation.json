@@ -50,7 +50,8 @@
         "courtSettings": "場地設定",
         "autoAssignDescription": "啟用後，滿4人的隊伍會自動分配到空場地。",
         "currentCourts": "目前場地數：{{count}}",
-        "autoAssign": "自動分配場地"
+        "autoAssign": "自動分配場地",
+        "openSettings": "開啟設定"
     },
     "court": {
         "courts": "場地",

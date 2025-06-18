@@ -895,11 +895,11 @@ export const CourtSystem: React.FC = () => {
         //TODO: 更新等待隊列和場地狀態
         // 更新待命區
 
-        const existingPlayers = findPlayersOnCourtAndQueue()
-        const existingPlayerNames = existingPlayers.map(p => p.name)
+        const playersOnCourtAndQueue = findPlayersOnCourtAndQueue()
+        const PlayerNamesOnCourtAndQueue = playersOnCourtAndQueue.map(p => p.name)
 
         const updatedStandbyPlayers = players.filter(player =>
-            player.enabled && !player.group && !existingPlayerNames.includes(player.name)
+            player.enabled && !player.group && !PlayerNamesOnCourtAndQueue.includes(player.name)
         );
         setStandbyPlayers(updatedStandbyPlayers);
         // 更新場地中的players
@@ -916,10 +916,13 @@ export const CourtSystem: React.FC = () => {
             return court;
         }));
         // 更新等待隊列
-        setWaitingQueue(prevQueue => prevQueue.map(group => ({
-            ...group,
-            players: group.players.filter(player => player.enabled)
-        })));
+        setWaitingQueue(prevQueue => prevQueue.map(group => {
+
+            return {
+                ...group,
+                players: group.players.filter(player => player.enabled)
+            }
+        }));
     }, [players]);
 
     // 檢查並自動安排球員上場

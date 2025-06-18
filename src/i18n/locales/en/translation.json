@@ -44,7 +44,8 @@
         "courtSettings": "Court Settings",
         "autoAssignDescription": "When enabled, groups of 4 will be automatically assigned to available courts.",
         "currentCourts": "Current number of courts: {{count}}",
-        "autoAssign": "Auto Assign Courts"
+        "autoAssign": "Auto Assign Courts",
+        "openSettings": "Open Settings"
     },
     "court": {
         "courts": "Courts",
