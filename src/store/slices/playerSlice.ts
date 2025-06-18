@@ -36,6 +36,7 @@ export const playerSlice = createSlice({
                 enabled: true,
                 isPlaying: false,
                 isQueuing: false,
+                group: undefined,
                 gamesPlayed: 0
             };
             state.players.push(newPlayer);

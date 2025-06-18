@@ -1002,6 +1002,7 @@ export const CourtSystem: React.FC = () => {
             createdAt: new Date(),
             court: targetCourt
         };
+        player.group = newGroup
         setCourts(prevCourts => prevCourts.map(court => {
             if (court.id === targetCourtId) {
                 court.group = newGroup;
@@ -1066,6 +1067,8 @@ export const CourtSystem: React.FC = () => {
             });
             return;
         }
+        player.group = targetGroup
+
         // 從所有場地中移除該球員
         setCourts(prevCourts => prevCourts.map(court => {
             if (court.group && court.group.id != groupId && court.group.players.some(p => p.id === player.id)) {
@@ -1088,9 +1091,7 @@ export const CourtSystem: React.FC = () => {
                 }
             }
             else if (court.group && court.group.id === groupId && !court.group.players.includes(player)) {
-
                 court.group.players.push(player)
-
             }
             return court;
         }));
@@ -1107,6 +1108,7 @@ export const CourtSystem: React.FC = () => {
                 players: group.players.filter(p => p.id !== player.id)
             };
         }).filter(group => group.players.length > 0));
+
     };
 
     // 處理等待隊列重新排序
@@ -1150,9 +1152,9 @@ export const CourtSystem: React.FC = () => {
         });
     };
 
-    // 處理球員從排隊區移動到待命區
     const handlePlayerMoveToStandby = (player: Player) => {
-        if (player.isPlaying) {
+        if (player?.group?.court) {
+            //remove player from group
             setCourts(prevCourts => prevCourts.map(court => {
                 if (court.group && court.group.players.some(p => p.id === player.id)) {
                     const remainingPlayers = court.group.players.filter(p => p.id !== player.id);
@@ -1175,13 +1177,15 @@ export const CourtSystem: React.FC = () => {
                 }
                 return court;
             }));
+            //remove empty group
         }
-        else if (player.isQueuing) {
+        else if (player?.group) {
             setWaitingQueue(prevQueue => prevQueue.map(group => ({
                 ...group,
                 players: group.players.filter(p => p.id !== player.id)
-            })).filter(group => group.players.length > 0)); // 移除空組
+            })).filter(group => group.players.length > 0));
         }
+        player.group = undefined
 
         // 將球員添加到待命區
         const updatedPlayer = { ...player, isQueuing: false, isPlaying: false };

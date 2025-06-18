@@ -10,6 +10,7 @@ export interface Player {
   isPlaying: boolean;
   isQueuing: boolean;
   gamesPlayed: number;
+  group: PlayerGroup| undefined;
 }
 
 // 一組要上場的球員（4人一組）

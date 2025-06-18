@@ -1,17 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
 import playerReducer from './slices/playerSlice';
+import { Player } from '../types/court';
 
 interface PlayerState {
-    players: {
-        id: string;
-        name: string;
-        gender: 'male' | 'female' | 'unknown';
-        level: number;
-        enabled: boolean;
-        isPlaying: boolean;
-        isQueuing: boolean;
-        gamesPlayed: number;
-    }[];
+    players: Player[];
 }
 
 const loadPlayersFromStorage = (): PlayerState => {
