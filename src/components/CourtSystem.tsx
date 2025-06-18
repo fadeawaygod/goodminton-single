@@ -929,10 +929,7 @@ export const CourtSystem: React.FC = () => {
             court.id === emptyCourt.id
                 ? {
                     ...court,
-                    group: {
-                        ...nextGroup,
-                        players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false }))
-                    },
+                    group: nextGroup,
                     isActive: true,
                 }
                 : court
@@ -1063,6 +1060,14 @@ export const CourtSystem: React.FC = () => {
             setSnackbar({
                 open: true,
                 message: t('court.maxPlayersSelected'),
+                severity: 'error'
+            });
+            return;
+        }
+        if (targetGroup.players.find(p => p.id == player.id)) {
+            setSnackbar({
+                open: true,
+                message: t('court.playerAlreadyInGroup'),
                 severity: 'error'
             });
             return;
