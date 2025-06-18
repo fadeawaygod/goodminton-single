@@ -59,6 +59,7 @@
         "maxPlayersSelected": "Maximum number of players (4) already selected",
         "groupMovedToCourt": "Group moved to Court {{court}}",
         "groupAssigned": "Group assigned to Court {{court}}",
+        "groupMovedToQueue": "Group moved to waiting queue",
         "finishGame": "End Game",
         "dropHere": "Drop player here",
         "spotsLeft": "spots left",

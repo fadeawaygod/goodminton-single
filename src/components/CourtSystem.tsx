@@ -1231,8 +1231,6 @@ export const CourtSystem: React.FC = () => {
             return [...prevQueue, group];
         });
 
-
-
         setSnackbar({
             open: true,
             message: t('court.groupMovedToQueue'),
