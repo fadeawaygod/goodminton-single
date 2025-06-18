@@ -10,9 +10,6 @@ import Settings from './pages/Settings';
 import { Provider } from 'react-redux';
 import { store } from './store';
 
-// 使用 PUBLIC_URL 作為 basename
-const basePath = process.env.PUBLIC_URL || '';
-
 const theme = createTheme({
   palette: {
     primary: {
@@ -26,6 +23,9 @@ const theme = createTheme({
     },
   },
 });
+
+// 使用 PUBLIC_URL 作為 basename
+const basePath = process.env.PUBLIC_URL || '';
 
 const App: React.FC = () => {
   return (
