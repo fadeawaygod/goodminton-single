@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+  </head>
+  <body>
+    <script>
+      // 獲取當前路徑
+      const path = window.location.pathname;
+      const search = window.location.search;
+      const hash = window.location.hash;
+      
+      // 重定向到 index.html，保持路徑和參數
+      window.location.href = '/goodminton-single/index.html' + path.replace('/goodminton-single', '') + search + hash;
+    </script>
+  </body>
+</html> 
