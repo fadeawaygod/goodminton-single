@@ -114,6 +114,7 @@
             "duplicate": "{{count}} players already exist",
             "failed": "Import failed. Please ensure each player name is on a new line",
             "noPlayers": "No players were imported. Please check the clipboard content"
-        }
+        },
+        "deletePlayer": "Delete Player"
     }
 }

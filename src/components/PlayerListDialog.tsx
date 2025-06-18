@@ -17,11 +17,13 @@ import {
     Alert,
     Stack
 } from '@mui/material';
-import { Delete as DeleteIcon, Add as AddIcon, ContentPaste as ContentPasteIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, Add as AddIcon, ContentPaste as ContentPasteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { selectAllPlayers, deletePlayer, togglePlayerEnabled, addPlayer } from '../store/slices/playerSlice';
 import { AddPlayerDialog } from './AddPlayerDialog';
+import EditPlayerDialog from './EditPlayerDialog';
+import { Player } from '../types/court';
 
 interface PlayerListDialogProps {
     open: boolean;
@@ -33,6 +35,8 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
     const dispatch = useAppDispatch();
     const players = useAppSelector(selectAllPlayers);
     const [addPlayerOpen, setAddPlayerOpen] = useState(false);
+    const [editPlayerOpen, setEditPlayerOpen] = useState(false);
+    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [importResult, setImportResult] = useState<{
         success: number;
         duplicate: number;
@@ -46,6 +50,21 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
 
     const handleToggleEnabled = (playerId: string) => {
         dispatch(togglePlayerEnabled(playerId));
+    };
+
+    const handleEditPlayer = (player: Player) => {
+        setSelectedPlayer(player);
+        setEditPlayerOpen(true);
+    };
+
+    const handleCloseEditDialog = () => {
+        setEditPlayerOpen(false);
+        setSelectedPlayer(null);
+    };
+
+    const handleSavePlayer = (updatedPlayer: Player) => {
+        // 這裡可以添加額外的邏輯，比如顯示成功訊息
+        console.log('Player updated:', updatedPlayer);
     };
 
     const handleImportFromClipboard = async () => {
@@ -158,14 +177,26 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                                             onChange={() => handleToggleEnabled(player.id)}
                                             disabled={player.isPlaying || player.isQueuing}
                                         />
-                                        <IconButton
-                                            edge="end"
-                                            aria-label="delete"
-                                            onClick={() => handleDeletePlayer(player.id)}
-                                            disabled={player.isPlaying || player.isQueuing}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        <Tooltip title={t('playerList.editPlayer')}>
+                                            <IconButton
+                                                edge="end"
+                                                aria-label="edit"
+                                                onClick={() => handleEditPlayer(player)}
+                                                disabled={player.isPlaying || player.isQueuing}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title={t('playerList.deletePlayer', '刪除球員')}>
+                                            <IconButton
+                                                edge="end"
+                                                aria-label="delete"
+                                                onClick={() => handleDeletePlayer(player.id)}
+                                                disabled={player.isPlaying || player.isQueuing}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
                                     </Box>
                                 }
                             >
@@ -241,6 +272,12 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
             <AddPlayerDialog
                 open={addPlayerOpen}
                 onClose={() => setAddPlayerOpen(false)}
+            />
+            <EditPlayerDialog
+                open={editPlayerOpen}
+                onClose={handleCloseEditDialog}
+                player={selectedPlayer}
+                onSave={handleSavePlayer}
             />
         </>
     );
