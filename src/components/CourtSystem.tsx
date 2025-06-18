@@ -769,7 +769,7 @@ export const CourtSystem: React.FC = () => {
             // 創建語音實例
             const utterance = new window.SpeechSynthesisUtterance(text);
             utterance.lang = lang;
-            utterance.rate = 1;
+            utterance.rate = 0.6;
             utterance.pitch = 1;
             utterance.volume = 1;
             utterance.onend = () => resolve();
