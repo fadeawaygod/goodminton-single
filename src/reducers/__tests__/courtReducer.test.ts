@@ -1,5 +1,5 @@
 import { courtReducer, createInitialState } from '../courtReducer';
-import { Player, CourtSystemState, PlayerGroup } from '../../types/court';
+import { Player, CourtSystemState, PlayerGroup, Gender, Court } from '../../types/court';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('courtReducer', () => {
@@ -10,8 +10,12 @@ describe('courtReducer', () => {
         mockPlayer = {
             id: uuidv4(),
             name: 'Test Player',
+            gender: 'unknown' as Gender,
+            level: 1,
+            enabled: true,
             isPlaying: false,
             isQueuing: false,
+            gamesPlayed: 0,
         };
         initialState = createInitialState(2, [mockPlayer]);
     });
@@ -22,13 +26,28 @@ describe('courtReducer', () => {
             const courtId = 'court-1';
             const players = [
                 { ...mockPlayer, isPlaying: true },
-                { id: uuidv4(), name: 'Player 2', isPlaying: true, isQueuing: false },
+                { 
+                    id: uuidv4(), 
+                    name: 'Player 2', 
+                    gender: 'unknown' as Gender,
+                    level: 1,
+                    enabled: true,
+                    isPlaying: true, 
+                    isQueuing: false,
+                    gamesPlayed: 0,
+                },
             ];
+            const group: PlayerGroup = {
+                id: uuidv4(),
+                players,
+                createdAt: new Date(),
+                court: undefined,
+            };
             const state: CourtSystemState = {
                 ...initialState,
                 courts: initialState.courts.map(court =>
                     court.id === courtId
-                        ? { ...court, players, isActive: true }
+                        ? { ...court, group, isActive: true }
                         : court
                 ),
                 standbyPlayers: [],
@@ -38,10 +57,10 @@ describe('courtReducer', () => {
             const newState = courtReducer(state, { type: 'FINISH_GAME', courtId });
 
             // Assert
-            expect(newState.courts[0].players).toHaveLength(0);
+            expect(newState.courts[0].group).toBeUndefined();
             expect(newState.courts[0].isActive).toBeFalsy();
             expect(newState.standbyPlayers).toHaveLength(2);
-            expect(newState.standbyPlayers.every(p => !p.isPlaying)).toBeTruthy();
+            expect(newState.standbyPlayers.every((p: Player) => !p.isPlaying)).toBeTruthy();
         });
 
         it('should not modify state when court is not active', () => {
@@ -79,13 +98,28 @@ describe('courtReducer', () => {
             // Arrange
             const courtId = 'court-1';
             const existingPlayers = [
-                { id: uuidv4(), name: 'Player 2', isPlaying: true, isQueuing: false },
+                { 
+                    id: uuidv4(), 
+                    name: 'Player 2', 
+                    gender: 'unknown' as Gender,
+                    level: 1,
+                    enabled: true,
+                    isPlaying: true, 
+                    isQueuing: false,
+                    gamesPlayed: 0,
+                },
             ];
+            const group: PlayerGroup = {
+                id: uuidv4(),
+                players: existingPlayers,
+                createdAt: new Date(),
+                court: undefined,
+            };
             const state: CourtSystemState = {
                 ...initialState,
                 courts: initialState.courts.map(court =>
                     court.id === courtId
-                        ? { ...court, players: existingPlayers }
+                        ? { ...court, group }
                         : court
                 ),
             };
@@ -98,9 +132,9 @@ describe('courtReducer', () => {
             });
 
             // Assert
-            const targetCourt = newState.courts.find(c => c.id === courtId);
-            expect(targetCourt?.players).toHaveLength(2);
-            expect(targetCourt?.players.some(p => p.id === mockPlayer.id)).toBeTruthy();
+            const targetCourt = newState.courts.find((c: Court) => c.id === courtId);
+            expect(targetCourt?.group?.players).toHaveLength(2);
+            expect(targetCourt?.group?.players.some((p: Player) => p.id === mockPlayer.id)).toBeTruthy();
         });
     });
 
@@ -110,8 +144,18 @@ describe('courtReducer', () => {
             const groupId = uuidv4();
             const existingGroup: PlayerGroup = {
                 id: groupId,
-                players: [{ id: uuidv4(), name: 'Player 2', isPlaying: false, isQueuing: true }],
+                players: [{ 
+                    id: uuidv4(), 
+                    name: 'Player 2', 
+                    gender: 'unknown' as Gender,
+                    level: 1,
+                    enabled: true,
+                    isPlaying: false, 
+                    isQueuing: true,
+                    gamesPlayed: 0,
+                }],
                 createdAt: new Date(),
+                court: undefined,
             };
             const state: CourtSystemState = {
                 ...initialState,
@@ -127,7 +171,7 @@ describe('courtReducer', () => {
 
             // Assert
             expect(newState.waitingQueue[0].players).toHaveLength(2);
-            expect(newState.waitingQueue[0].players.some(p => p.id === mockPlayer.id)).toBeTruthy();
+            expect(newState.waitingQueue[0].players.some((p: Player) => p.id === mockPlayer.id)).toBeTruthy();
         });
 
         it('should not modify state when target group is full', () => {
@@ -138,10 +182,15 @@ describe('courtReducer', () => {
                 players: Array(4).fill(null).map(() => ({
                     id: uuidv4(),
                     name: 'Player',
+                    gender: 'unknown' as Gender,
+                    level: 1,
+                    enabled: true,
                     isPlaying: false,
                     isQueuing: true,
+                    gamesPlayed: 0,
                 })),
                 createdAt: new Date(),
+                court: undefined,
             };
             const state: CourtSystemState = {
                 ...initialState,
@@ -163,15 +212,17 @@ describe('courtReducer', () => {
     describe('QUEUE_REORDER', () => {
         it('should reorder groups in waiting queue', () => {
             // Arrange
-            const group1 = {
+            const group1: PlayerGroup = {
                 id: uuidv4(),
                 players: [mockPlayer],
                 createdAt: new Date(),
+                court: undefined,
             };
-            const group2 = {
+            const group2: PlayerGroup = {
                 id: uuidv4(),
                 players: [{ ...mockPlayer, id: uuidv4() }],
                 createdAt: new Date(),
+                court: undefined,
             };
             const state: CourtSystemState = {
                 ...initialState,

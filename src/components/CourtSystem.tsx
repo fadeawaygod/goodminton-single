@@ -118,10 +118,10 @@ const chameleonColors = {
 const DraggableGroup: React.FC<{
     group: PlayerGroup;
     index: number;
-    onPlayerDrop: (player: Player) => void;
+    onPlayerDropToGroup: (player: Player) => void;
     onGroupMove: (dragIndex: number, hoverIndex: number) => void;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ group, index, onPlayerDrop, onGroupMove, onPlayerUpdate }) => {
+}> = ({ group, index, onPlayerDropToGroup, onGroupMove, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const dropTargetRef = useRef<HTMLDivElement>(null);
 
@@ -188,7 +188,7 @@ const DraggableGroup: React.FC<{
         },
         drop: (item: any) => {
             if (item.type === ItemTypes.PLAYER) {
-                onPlayerDrop(item);
+                onPlayerDropToGroup(item);
             }
             return {};
         },
@@ -266,10 +266,10 @@ const DraggableGroup: React.FC<{
 
 // 場地上的組別組件
 const CourtGroup: React.FC<{
-    players: Player[];
+    group: PlayerGroup | undefined;
     courtId: string;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ players, courtId, onPlayerUpdate }) => {
+}> = ({ group, courtId, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const [timeElapsed, setTimeElapsed] = useState<number>(0);
     const startTimeRef = useRef<Date>(new Date());
@@ -278,7 +278,7 @@ const CourtGroup: React.FC<{
     useEffect(() => {
         startTimeRef.current = new Date();
         setTimeElapsed(0);
-    }, [players.length]);
+    }, [group?.players.length]);
 
     // 計時器
     useEffect(() => {
@@ -292,14 +292,14 @@ const CourtGroup: React.FC<{
         type: ItemTypes.GROUP,
         item: {
             type: ItemTypes.GROUP,
-            players,
+            players: group?.players,
             fromCourtId: courtId,
             isPlayingGroup: true
         },
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         }),
-    }), [courtId, players]);
+    }), [courtId, group?.players]);
 
     // 使用 preview 來隱藏預覽
     useEffect(() => {
@@ -360,7 +360,7 @@ const CourtGroup: React.FC<{
                         {t('court.playing')}
                     </Typography>
                     {
-                        players.length === 4 &&
+                        group?.players.length === 4 &&
                         <Typography variant="caption">
                             {formatTime(timeElapsed)}
                         </Typography>
@@ -372,7 +372,7 @@ const CourtGroup: React.FC<{
                     gap: 0.5,
                     pt: 1
                 }}>
-                    {players.map(player => (
+                    {group?.players.map(player => (
                         <DraggablePlayer
                             key={player.id}
                             player={player}
@@ -389,13 +389,13 @@ const CourtGroup: React.FC<{
 const Court: React.FC<{
     court: CourtType;
     onFinishGame: (courtId: string) => void;
-    onPlayerDrop: (player: Player, courtId: string) => void;
+    onPlayerDropToGroup: (player: Player, courtId: string) => void;
     onCreateGroup: (player: Player, courtId: string) => void;
     onGroupAssign: (groupId: string, courtId: string) => void;
     onGroupMove: (fromCourtId: string, toCourtId: string) => void;
     onCourtNameChange?: (courtId: string, newName: string) => void;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ court, onFinishGame, onPlayerDrop, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange, onPlayerUpdate }) => {
+}> = ({ court, onFinishGame, onPlayerDropToGroup, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(court.name);
@@ -434,7 +434,7 @@ const Court: React.FC<{
 
             if (item.type === ItemTypes.GROUP) {
                 // 如果是組別拖拽，只有空場地可以接受
-                if (court.players.length > 0) return false;
+                if (court.group) return false;
                 if (item.fromCourtId === court.id) return false;
                 if (item.isPlayingGroup) return true;
                 if (item.fromQueue) return true;
@@ -442,7 +442,7 @@ const Court: React.FC<{
 
             if (item.type === ItemTypes.PLAYER) {
                 // 如果是球員拖拽，場地必須未滿4人
-                return court.players.length < 4;
+                return !court.group || court.group.players.length < 4;
             }
 
             return false;
@@ -454,7 +454,9 @@ const Court: React.FC<{
                 } else if (item.fromQueue && item.groupId) {
                     onGroupAssign(item.groupId, court.id);
                 }
-            } else if (item.type === ItemTypes.PLAYER) {
+            } else if (item.type === ItemTypes.PLAYER && court.group) {
+                onPlayerDropToGroup(item, court.group.id);
+            } else if (item.type === ItemTypes.PLAYER && !court.group) {
                 onCreateGroup(item, court.id);
             }
             return { dropped: true };
@@ -463,7 +465,7 @@ const Court: React.FC<{
             isOver: monitor.isOver(),
             canDrop: monitor.canDrop(),
         }),
-    }), [court.id, court.isActive, court.players.length, onGroupMove, onGroupAssign, onCreateGroup]);
+    }), [court.id, court.isActive, court.group, onGroupMove, onGroupAssign, onCreateGroup]);
 
     const elementRef = useCallback(
         (node: HTMLElement | null) => {
@@ -474,7 +476,7 @@ const Court: React.FC<{
         [dropRef]
     );
 
-    const hasPlayers = court.players.length > 0;
+    const hasGroup = court.group !== undefined
 
     return (
         <div ref={elementRef} data-testid={`court-${court.name}`}>
@@ -483,8 +485,8 @@ const Court: React.FC<{
                 sx={{
                     p: { xs: 1, sm: 2 },
                     height: { xs: '150px', sm: '200px' },
-                    backgroundColor: hasPlayers ? chameleonColors.active : chameleonColors.background,
-                    '&:hover': hasPlayers ? {
+                    backgroundColor: hasGroup ? chameleonColors.active : chameleonColors.background,
+                    '&:hover': hasGroup ? {
                         backgroundColor: chameleonColors.hover,
                     } : canDrop ? {
                         backgroundColor: isOver ? `${chameleonColors.success}40` : `${chameleonColors.hover}40`,
@@ -532,7 +534,7 @@ const Court: React.FC<{
                             onClick={handleNameClick}
                             sx={{
                                 fontSize: { xs: '0.9rem', sm: '1rem' },
-                                color: hasPlayers ? chameleonColors.primary : 'text.secondary',
+                                color: hasGroup ? chameleonColors.primary : 'text.secondary',
                                 fontWeight: 'bold',
                                 cursor: (court.isActive || !onCourtNameChange) ? 'default' : 'pointer',
                                 '&:hover': {
@@ -543,7 +545,7 @@ const Court: React.FC<{
                             {court.name}
                         </Typography>
                     )}
-                    {hasPlayers && (
+                    {hasGroup && (
                         <Tooltip title={t('court.finishGame')} placement="top">
                             <IconButton
                                 size="small"
@@ -560,13 +562,13 @@ const Court: React.FC<{
                         </Tooltip>
                     )}
                 </Box>
-                {hasPlayers && (
+                {hasGroup && (
                     <Box sx={{
                         flex: 1,
                         position: 'relative',
                     }}>
                         <CourtGroup
-                            players={court.players}
+                            group={court.group}
                             courtId={court.id}
                             onPlayerUpdate={onPlayerUpdate}
                         />
@@ -583,7 +585,7 @@ const DroppableQueueArea: React.FC<{
     onCreateNewGroup: (player: Player) => void;
     onPlayerDropToGroup: (player: Player, groupId: string) => void;
     onQueueReorder: (dragIndex: number, hoverIndex: number) => void;
-    onPlayingGroupDrop: (players: Player[]) => void;
+    onPlayingGroupDrop: (group: PlayerGroup) => void;
     onPlayerUpdate: (player: Player) => void;
 }> = ({ waitingQueue, onCreateNewGroup, onPlayerDropToGroup, onQueueReorder, onPlayingGroupDrop, onPlayerUpdate }) => {
     const { t } = useTranslation();
@@ -641,7 +643,7 @@ const DroppableQueueArea: React.FC<{
                         <DraggableGroup
                             group={group}
                             index={index}
-                            onPlayerDrop={(player) => onPlayerDropToGroup(player, group.id)}
+                            onPlayerDropToGroup={(player) => onPlayerDropToGroup(player, group.id)}
                             onGroupMove={onQueueReorder}
                             onPlayerUpdate={onPlayerUpdate}
                         />
@@ -850,8 +852,8 @@ export const CourtSystem: React.FC = () => {
                 id: uuidv4(),
                 name: `${i + 1}`,
                 players: [],
-                maxPlayers: 4,
                 isActive: false,
+                group: undefined,
             }));
             setCourts(initialCourts);
             return;
@@ -866,10 +868,9 @@ export const CourtSystem: React.FC = () => {
                     for (let i = prevCourts.length; i < courtCount; i++) {
                         newCourts.push({
                             id: uuidv4(),
-                            name: `${i + 1}`,  // 新場地使用數字名稱
-                            players: [],
-                            maxPlayers: 4,
+                            name: `${i + 1}`, // 新場地使用數字名稱                       
                             isActive: false,
+                            group: undefined,
                         });
                     }
                     return newCourts;
@@ -894,10 +895,18 @@ export const CourtSystem: React.FC = () => {
         );
         setStandbyPlayers(updatedStandbyPlayers);
         // 更新場地中的players
-        setCourts(prevCourts => prevCourts.map(court => ({
-            ...court,
-            players: court.players.filter(player => player.enabled && player.isPlaying && !player.isQueuing)
-        })));
+        setCourts(prevCourts => prevCourts.map(court => {
+            if (court.group) {
+                return {
+                    ...court,
+                    group: {
+                        ...court.group,
+                        players: court.group.players.filter(player => player.enabled && player.isPlaying && !player.isQueuing)
+                    }
+                };
+            }
+            return court;
+        }));
         // 更新等待隊列
         setWaitingQueue(prevQueue => prevQueue.map(group => ({
             ...group,
@@ -910,7 +919,7 @@ export const CourtSystem: React.FC = () => {
         if (waitingQueue.length === 0 || waitingQueue[0].players.length < 4) {
             return;
         }
-        const emptyCourt = courts.find(court => !court.isActive && court.players.length === 0);
+        const emptyCourt = courts.find(court => !court.isActive && !court.group);
         if (!emptyCourt) return;
 
         const nextGroup = waitingQueue[0];
@@ -920,9 +929,11 @@ export const CourtSystem: React.FC = () => {
             court.id === emptyCourt.id
                 ? {
                     ...court,
-                    players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                    group: {
+                        ...nextGroup,
+                        players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false }))
+                    },
                     isActive: true,
-                    startTime: new Date(),
                 }
                 : court
         ));
@@ -949,25 +960,23 @@ export const CourtSystem: React.FC = () => {
     // 處理比賽結束（下場）
     const handleFinishGame = (courtId: string) => {
         const court = courts.find(c => c.id === courtId);
-        if (!court || !court.isActive) return;
-        // 更新球員的uPlayerGameCount
-        for (const player of court.players) {
+        if (!court || !court.isActive || !court.group) return;
+
+        // 更新球員的gamesPlayed
+        for (const player of court.group.players) {
             player.gamesPlayed++;
         }
-
 
         // 更新本地狀態
         setCourts(prevCourts => prevCourts.map(c =>
             c.id === courtId
-                ? { ...c, players: [], isActive: false, startTime: undefined }
+                ? { ...c, group: undefined, isActive: false }
                 : c
         ));
 
-
-
         setStandbyPlayers(prevPlayers => [
             ...prevPlayers,
-            ...court.players.map(p => ({ ...p, isPlaying: false }))
+            ...court.group!.players.map(p => ({ ...p, isPlaying: false }))
         ]);
 
         // 播放語音提示
@@ -982,105 +991,39 @@ export const CourtSystem: React.FC = () => {
     };
 
     // 處理球員拖拽到場地（改為加入等待隊列）
-    const handlePlayerDrop = (player: Player, targetCourtId?: string) => {
-        // 如果有指定目標場地，檢查該場地是否可用
-        if (targetCourtId) {
-            const targetCourt = courts.find(c => c.id === targetCourtId);
-            if (targetCourt && !targetCourt.isActive) {
-                // 如果場地已經有球員，則添加到現有組
-                if (targetCourt.players.length > 0 && targetCourt.players.length < 4) {
-                    // 防止同一球員重複加入同一場地
-                    if (targetCourt.players.some(p => p.id === player.id)) {
-                        setSnackbar({
-                            open: true,
-                            message: t('court.playerAlreadyInCourt'),
-                            severity: 'warning'
-                        });
-                        return;
-                    }
-                    setCourts(prevCourts => prevCourts.map(court => {
-                        if (court.id === targetCourtId) {
-                            return {
-                                ...court,
-                                players: [
-                                    ...court.players,
-                                    { ...player, isPlaying: true, isQueuing: false }
-                                ],
-                                isActive: court.players.length + 1 === 4 // 如果加入後達到4人，則設為活動
-                            };
-                        }
-                        // 從其他場地移除該球員
-                        if (court.players.some(p => p.id === player.id)) {
-                            const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                            return {
-                                ...court,
-                                players: remainingPlayers,
-                                isActive: remainingPlayers.length === 4
-                            };
-                        }
-                        return court;
-                    }));
+    const onCreateNewGroup = (player: Player, targetCourtId?: string) => {
 
-                    // 從待命區和排隊區移除該球員
-                    setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
-                    setWaitingQueue(prevQueue => prevQueue
-                        .map(group => ({
-                            ...group,
-                            players: group.players.filter(p => p.id !== player.id)
-                        }))
-                        .filter(group => group.players.length > 0));
-                    return;
-                } else if (targetCourt.players.length === 0) {
-                    // 如果場地是空的，創建新組
-                    setCourts(prevCourts => prevCourts.map(court => {
-                        if (court.id === targetCourtId) {
-                            return {
-                                ...court,
-                                players: [{ ...player, isPlaying: true, isQueuing: false }],
-                                isActive: false
-                            };
-                        }
-                        // 從其他場地移除該球員
-                        if (court.players.some(p => p.id === player.id)) {
-                            const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                            return {
-                                ...court,
-                                players: remainingPlayers,
-                                isActive: remainingPlayers.length === 4
-                            };
-                        }
-                        return court;
-                    }));
-
-                    // 從待命區和排隊區移除該球員
-                    setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
-                    setWaitingQueue(prevQueue => prevQueue
-                        .map(group => ({
-                            ...group,
-                            players: group.players.filter(p => p.id !== player.id)
-                        }))
-                        .filter(group => group.players.length > 0));
-                    return;
-                }
-            }
-        }
+        const targetCourt = courts.find(c => c.id === targetCourtId);
 
         // 如果沒有指定目標場地或目標場地不可用，則創建新組到排隊區
         const newGroup: PlayerGroup = {
             id: uuidv4(),
-            players: [{ ...player, isQueuing: true, isPlaying: false }],
+            players: [player],
             createdAt: new Date(),
+            court: targetCourt
         };
-
-        // 從所有場地中移除該球員
         setCourts(prevCourts => prevCourts.map(court => {
-            if (court.players.some(p => p.id === player.id)) {
-                const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                return {
-                    ...court,
-                    players: remainingPlayers,
-                    isActive: remainingPlayers.length === 4
-                };
+            if (court.id === targetCourtId) {
+                court.group = newGroup;
+            }
+            else if (court.group && court.group.players.some(p => p.id === player.id)) {
+                const remainingPlayers = court.group.players.filter(p => p.id !== player.id);
+                if (remainingPlayers.length === 0) {
+                    return {
+                        ...court,
+                        group: undefined,
+                        isActive: false
+                    };
+                } else {
+                    return {
+                        ...court,
+                        group: {
+                            ...court.group,
+                            players: remainingPlayers
+                        },
+                        isActive: remainingPlayers.length === 4
+                    };
+                }
             }
             return court;
         }));
@@ -1088,14 +1031,16 @@ export const CourtSystem: React.FC = () => {
         // 從待命區移除該球員
         setStandbyPlayers(prevPlayers => prevPlayers.filter(p => p.id !== player.id));
 
-        // 從其他隊伍中移除該球員並添加新組
+        // 從其他隊伍中移除該球員
         setWaitingQueue(prevQueue => [
             ...prevQueue.map(group => ({
                 ...group,
                 players: group.players.filter(p => p.id !== player.id)
-            })).filter(group => group.players.length > 0),
-            newGroup
+            })).filter(group => group.players.length > 0)
         ]);
+        if (!targetCourt) {
+            setWaitingQueue(prevQueue => [...prevQueue, newGroup]);
+        }
 
         // 顯示提示
         setSnackbar({
@@ -1108,7 +1053,11 @@ export const CourtSystem: React.FC = () => {
     // 處理球員拖拽到隊伍
     const handlePlayerDropToGroup = (player: Player, groupId: string) => {
         // 檢查目標組是否已滿
-        const targetGroup = waitingQueue.find(g => g.id === groupId);
+        let targetGroup = waitingQueue.find(g => g.id === groupId)
+        if (!targetGroup) {
+            targetGroup = courts.find(c => c.group?.id === groupId)?.group;
+        }
+
         if (!targetGroup || targetGroup.players.length >= 4) {
             setSnackbar({
                 open: true,
@@ -1117,24 +1066,31 @@ export const CourtSystem: React.FC = () => {
             });
             return;
         }
-        // 防止同一球員重複加入同一 group
-        if (targetGroup.players.some(p => p.id === player.id)) {
-            setSnackbar({
-                open: true,
-                message: t('court.playerAlreadyInGroup'),
-                severity: 'warning'
-            });
-            return;
-        }
         // 從所有場地中移除該球員
         setCourts(prevCourts => prevCourts.map(court => {
-            if (court.players.some(p => p.id === player.id)) {
-                const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                return {
-                    ...court,
-                    players: remainingPlayers,
-                    isActive: remainingPlayers.length === 4
-                };
+            if (court.group && court.group.id != groupId && court.group.players.some(p => p.id === player.id)) {
+                const remainingPlayers = court.group.players.filter(p => p.id !== player.id);
+                if (remainingPlayers.length === 0) {
+                    return {
+                        ...court,
+                        group: undefined,
+                        isActive: false
+                    };
+                } else {
+                    return {
+                        ...court,
+                        group: {
+                            ...court.group,
+                            players: remainingPlayers
+                        },
+                        isActive: remainingPlayers.length === 4
+                    };
+                }
+            }
+            else if (court.group && court.group.id === groupId && !court.group.players.includes(player)) {
+
+                court.group.players.push(player)
+
             }
             return court;
         }));
@@ -1168,18 +1124,20 @@ export const CourtSystem: React.FC = () => {
         const fromCourt = courts.find(c => c.id === fromCourtId);
         const toCourt = courts.find(c => c.id === toCourtId);
 
-        if (!fromCourt || !toCourt || toCourt.isActive) return;
+        if (!fromCourt || !toCourt || toCourt.isActive || !fromCourt.group) return;
 
         setCourts(prevCourts => prevCourts.map(court => {
             if (court.id === fromCourtId) {
-                return { ...court, players: [], isActive: false, startTime: undefined };
+                return { ...court, group: undefined, isActive: false };
             }
             if (court.id === toCourtId) {
                 return {
                     ...court,
-                    players: fromCourt.players,
+                    group: {
+                        ...fromCourt.group!,
+                        players: fromCourt.group!.players.map(p => ({ ...p, isPlaying: true, isQueuing: false }))
+                    },
                     isActive: true,
-                    startTime: new Date(),
                 };
             }
             return court;
@@ -1196,13 +1154,24 @@ export const CourtSystem: React.FC = () => {
     const handlePlayerMoveToStandby = (player: Player) => {
         if (player.isPlaying) {
             setCourts(prevCourts => prevCourts.map(court => {
-                if (court.players.some(p => p.id === player.id)) {
-                    const remainingPlayers = court.players.filter(p => p.id !== player.id);
-                    return {
-                        ...court,
-                        players: remainingPlayers,
-                        isActive: remainingPlayers.length === 4
-                    };
+                if (court.group && court.group.players.some(p => p.id === player.id)) {
+                    const remainingPlayers = court.group.players.filter(p => p.id !== player.id);
+                    if (remainingPlayers.length === 0) {
+                        return {
+                            ...court,
+                            group: undefined,
+                            isActive: false
+                        };
+                    } else {
+                        return {
+                            ...court,
+                            group: {
+                                ...court.group,
+                                players: remainingPlayers
+                            },
+                            isActive: remainingPlayers.length === 4
+                        };
+                    }
                 }
                 return court;
             }));
@@ -1232,13 +1201,7 @@ export const CourtSystem: React.FC = () => {
     };
 
     // 處理場地組別移動到排隊區
-    const handlePlayingGroupToQueue = useCallback((players: Player[]) => {
-        // 重新取得 fromCourt，避免 closure 問題
-        const fromCourt = courts.find(court =>
-            court.players.some(p => players.some(pl => pl.id === p.id))
-        );
-        if (!fromCourt) return;
-
+    const handlePlayingGroupToQueue = useCallback((group: PlayerGroup) => {
         // 移除排隊區所有 group 中重複的球員
         setWaitingQueue(prevQueue => {
             const cleanedQueue = prevQueue.map(group => ({
@@ -1250,16 +1213,19 @@ export const CourtSystem: React.FC = () => {
                 id: uuidv4(),
                 players: players.map(p => ({ ...p, isPlaying: false, isQueuing: true })),
                 createdAt: new Date(),
+                court: undefined
             };
             return [...cleanedQueue, newGroup];
         });
 
-        setCourts(prevCourts => prevCourts.map(court => {
-            if (court.id === fromCourt.id) {
-                return { ...court, players: [], isActive: false, startTime: undefined };
-            }
-            return court;
-        }));
+        if (group.court) {
+            setCourts(prevCourts => prevCourts.map(court => {
+                if (court.id === group.court?.id) {
+                    return { ...court, group: undefined, isActive: false };
+                }
+                return court;
+            }));
+        }
 
         setSnackbar({
             open: true,
@@ -1271,7 +1237,7 @@ export const CourtSystem: React.FC = () => {
     // 處理場地組別解散到待命區
     const handleGroupDissolve = (players: Player[]) => {
         const fromCourt = courts.find(court =>
-            court.players.some(p => players.includes(p))
+            court.group && court.group.players.some(p => players.includes(p))
         );
 
         if (!fromCourt) return;
@@ -1321,12 +1287,20 @@ export const CourtSystem: React.FC = () => {
     // 處理球員更新
     const handlePlayerUpdate = useCallback((updatedPlayer: Player) => {
         // 更新所有相關狀態中的球員資訊
-        setCourts(prevCourts => prevCourts.map(court => ({
-            ...court,
-            players: court.players.map(p =>
-                p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
-            )
-        })));
+        setCourts(prevCourts => prevCourts.map(court => {
+            if (court.group) {
+                return {
+                    ...court,
+                    group: {
+                        ...court.group,
+                        players: court.group.players.map(p =>
+                            p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+                        )
+                    }
+                };
+            }
+            return court;
+        }));
 
         setWaitingQueue(prevQueue => prevQueue.map(group => ({
             ...group,
@@ -1395,8 +1369,8 @@ export const CourtSystem: React.FC = () => {
                                     <Court
                                         court={court}
                                         onFinishGame={handleFinishGame}
-                                        onPlayerDrop={handlePlayerDrop}
-                                        onCreateGroup={handlePlayerDrop}
+                                        onPlayerDropToGroup={handlePlayerDropToGroup}
+                                        onCreateGroup={onCreateNewGroup}
                                         onGroupAssign={handleGroupAssign}
                                         onGroupMove={handleCourtGroupMove}
                                         onCourtNameChange={handleCourtNameChange}
@@ -1427,7 +1401,7 @@ export const CourtSystem: React.FC = () => {
                                 </Box>
                                 <DroppableQueueArea
                                     waitingQueue={waitingQueue}
-                                    onCreateNewGroup={handlePlayerDrop}
+                                    onCreateNewGroup={onCreateNewGroup}
                                     onPlayerDropToGroup={handlePlayerDropToGroup}
                                     onQueueReorder={handleQueueReorder}
                                     onPlayingGroupDrop={handlePlayingGroupToQueue}

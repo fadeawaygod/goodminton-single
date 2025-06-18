@@ -17,15 +17,15 @@ export interface PlayerGroup {
   id: string;
   players: Player[];
   createdAt: Date;
+  court: Court | undefined
 }
 
 // 場地基本資訊
 export interface Court {
   id: string;
   name: string;
-  players: Player[];
-  maxPlayers: number;
   isActive: boolean;
+  group: PlayerGroup| undefined;
 }
 
 // 系統狀態

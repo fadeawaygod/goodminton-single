@@ -7,9 +7,9 @@ describe('courtUtils', () => {
         it('should return first available empty court', () => {
             // Arrange
             const courts: Court[] = [
-                { id: 'court-1', number: 1, players: [{ id: '1', name: 'Player 1', isPlaying: true, isQueuing: false }], isActive: false },
-                { id: 'court-2', number: 2, players: [], isActive: false },
-                { id: 'court-3', number: 3, players: [], isActive: true },
+                { id: 'court-1', name: '1', isActive: false, group: undefined },
+                { id: 'court-2', name: '2', isActive: false, group: undefined },
+                { id: 'court-3', name: '3', isActive: true, group: undefined },
             ];
 
             // Act
@@ -22,8 +22,8 @@ describe('courtUtils', () => {
         it('should return undefined when no available court', () => {
             // Arrange
             const courts: Court[] = [
-                { id: 'court-1', number: 1, players: [], isActive: true },
-                { id: 'court-2', number: 2, players: [{ id: '1', name: 'Player 1', isPlaying: true, isQueuing: false }], isActive: false },
+                { id: 'court-1', name: '1', isActive: true, group: undefined },
+                { id: 'court-2', name: '2', isActive: false, group: undefined },
             ];
 
             // Act
@@ -42,10 +42,15 @@ describe('courtUtils', () => {
                 players: Array(4).fill(null).map(() => ({
                     id: uuidv4(),
                     name: 'Player',
+                    gender: 'unknown',
+                    level: 1,
+                    enabled: true,
                     isPlaying: false,
                     isQueuing: true,
+                    gamesPlayed: 0,
                 })),
                 createdAt: new Date(),
+                court: undefined,
             };
             const waitingQueue = [
                 fullGroup,
@@ -66,10 +71,15 @@ describe('courtUtils', () => {
                 players: Array(4).fill(null).map(() => ({
                     id: uuidv4(),
                     name: 'Player',
+                    gender: 'unknown',
+                    level: 1,
+                    enabled: true,
                     isPlaying: false,
                     isQueuing: true,
+                    gamesPlayed: 0,
                 })),
                 createdAt: new Date(),
+                court: undefined,
             };
             const waitingQueue = [
                 { ...fullGroup, id: uuidv4(), players: [fullGroup.players[0]] },
@@ -92,14 +102,19 @@ describe('courtUtils', () => {
                 players: Array(4).fill(null).map(() => ({
                     id: uuidv4(),
                     name: 'Player',
+                    gender: 'unknown',
+                    level: 1,
+                    enabled: true,
                     isPlaying: false,
                     isQueuing: true,
+                    gamesPlayed: 0,
                 })),
                 createdAt: new Date(),
+                court: undefined,
             };
             const state: CourtSystemState = {
                 courts: [
-                    { id: 'court-1', number: 1, players: [], isActive: false },
+                    { id: 'court-1', name: '1', isActive: false, group: undefined },
                 ],
                 waitingQueue: [fullGroup],
                 standbyPlayers: [],
@@ -111,7 +126,7 @@ describe('courtUtils', () => {
 
             // Assert
             expect(result).not.toBeNull();
-            expect(result?.courts[0].players).toHaveLength(4);
+            expect(result?.courts[0].group?.players).toHaveLength(4);
             expect(result?.courts[0].isActive).toBeTruthy();
             expect(result?.waitingQueue).toHaveLength(0);
         });
@@ -119,7 +134,7 @@ describe('courtUtils', () => {
         it('should return null when auto assign is disabled', () => {
             // Arrange
             const state: CourtSystemState = {
-                courts: [{ id: 'court-1', number: 1, players: [], isActive: false }],
+                courts: [{ id: 'court-1', name: '1', isActive: false, group: undefined }],
                 waitingQueue: [],
                 standbyPlayers: [],
                 autoAssign: false,

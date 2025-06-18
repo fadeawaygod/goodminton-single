@@ -1,7 +1,7 @@
 import { CourtSystemState, PlayerGroup } from '../types/court';
 
 export const findAvailableCourt = (courts: CourtSystemState['courts']) => {
-    return courts.find(court => !court.isActive && court.players.length === 0);
+    return courts.find(court => !court.isActive && !court.group);
 };
 
 export const findNextFullGroup = (waitingQueue: PlayerGroup[]) => {
@@ -18,7 +18,7 @@ export const checkAndAssignCourt = (state: CourtSystemState): CourtSystemState |
     }
 
     // 尋找空閒的場地
-    const availableCourt = state.courts.find(court => !court.isActive && court.players.length === 0);
+    const availableCourt = state.courts.find(court => !court.isActive && !court.group);
     if (!availableCourt) {
         return null;
     }
@@ -34,9 +34,11 @@ export const checkAndAssignCourt = (state: CourtSystemState): CourtSystemState |
         court.id === availableCourt.id
             ? {
                 ...court,
-                players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false })),
+                group: {
+                    ...nextGroup,
+                    players: nextGroup.players.map(p => ({ ...p, isPlaying: true, isQueuing: false }))
+                },
                 isActive: true,
-                startTime: new Date(),
             }
             : court
     );
