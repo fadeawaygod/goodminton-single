@@ -967,7 +967,7 @@ export const CourtSystem: React.FC = () => {
     // 處理比賽結束（下場）
     const handleFinishGame = (courtId: string) => {
         const court = courts.find(c => c.id === courtId);
-        if (!court || !court.isActive || !court.group) return;
+        if (!court || !court.group) return;
 
         // 更新球員的gamesPlayed
         for (const player of court.group.players) {
@@ -981,10 +981,11 @@ export const CourtSystem: React.FC = () => {
                 : c
         ));
 
-        setStandbyPlayers(prevPlayers => [
-            ...prevPlayers,
-            ...court.group!.players.map(p => ({ ...p, isPlaying: false }))
-        ]);
+        // 將組別移回排隊區
+        court.group.court = undefined;
+        setWaitingQueue(prevQueue => {
+            return [...prevQueue, court.group!];
+        });
 
         // 播放語音提示
         playTTS(t('court.ttsGameFinished', { number: court.name }));
