@@ -655,12 +655,11 @@ const DroppableQueueArea: React.FC<{
 // 修改待命區組件
 const StandbyArea: React.FC<{
     players: Player[];
-    onPlayerDrop: (player: Player) => void;
     onPlayerMoveToStandby: (player: Player) => void;
     onGroupDissolve: (players: Player[]) => void;
     courts: CourtType[];
     onPlayerUpdate: (player: Player) => void;
-}> = ({ players, onPlayerDrop, onPlayerMoveToStandby, onGroupDissolve, courts, onPlayerUpdate }) => {
+}> = ({ players, onPlayerMoveToStandby, onGroupDissolve, courts, onPlayerUpdate }) => {
     const { t } = useTranslation();
     const dropTargetRef = useRef<HTMLDivElement>(null);
 
@@ -668,11 +667,7 @@ const StandbyArea: React.FC<{
         accept: [ItemTypes.PLAYER, ItemTypes.GROUP],
         drop: (item: any) => {
             if (item.type === ItemTypes.PLAYER) {
-                if (item.isPlaying) {
-                    onPlayerDrop(item);
-                } else if (item.isQueuing) {
-                    onPlayerMoveToStandby(item);
-                }
+                onPlayerMoveToStandby(item);
             } else if (item.type === ItemTypes.GROUP && item.isPlayingGroup) {
                 onGroupDissolve(item.players);
             }
@@ -1199,11 +1194,25 @@ export const CourtSystem: React.FC = () => {
 
     // 處理球員從排隊區移動到待命區
     const handlePlayerMoveToStandby = (player: Player) => {
-        // 從排隊區移除該球員
-        setWaitingQueue(prevQueue => prevQueue.map(group => ({
-            ...group,
-            players: group.players.filter(p => p.id !== player.id)
-        })).filter(group => group.players.length > 0)); // 移除空組
+        if (player.isPlaying) {
+            setCourts(prevCourts => prevCourts.map(court => {
+                if (court.players.some(p => p.id === player.id)) {
+                    const remainingPlayers = court.players.filter(p => p.id !== player.id);
+                    return {
+                        ...court,
+                        players: remainingPlayers,
+                        isActive: remainingPlayers.length === 4
+                    };
+                }
+                return court;
+            }));
+        }
+        else if (player.isQueuing) {
+            setWaitingQueue(prevQueue => prevQueue.map(group => ({
+                ...group,
+                players: group.players.filter(p => p.id !== player.id)
+            })).filter(group => group.players.length > 0)); // 移除空組
+        }
 
         // 將球員添加到待命區
         const updatedPlayer = { ...player, isQueuing: false, isPlaying: false };
@@ -1429,7 +1438,6 @@ export const CourtSystem: React.FC = () => {
                         <Grid item xs={12} md={6}>
                             <StandbyArea
                                 players={standbyPlayers}
-                                onPlayerDrop={handlePlayerDrop}
                                 onPlayerMoveToStandby={handlePlayerMoveToStandby}
                                 onGroupDissolve={handleGroupDissolve}
                                 courts={courts}
