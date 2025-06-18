@@ -131,6 +131,12 @@
             "failed": "匯入失敗。請確保每個球員名稱各佔一行",
             "noPlayers": "沒有匯入任何球員。請檢查剪貼簿內容每行格式應為 1. 球員名稱"
         },
-        "deletePlayer": "刪除球員"
+        "deletePlayer": "刪除球員",
+        "deleteAllPlayers": "刪除所有球員",
+        "cannotDeleteActivePlayers": "無法刪除正在比賽或排隊中的球員",
+        "allPlayersDeleted": "所有球員已刪除",
+        "confirmDeleteAllTitle": "確認刪除所有球員",
+        "confirmDeleteAllMessage": "您確定要刪除所有 {{count}} 位球員嗎？此操作無法復原。",
+        "confirmDeleteAll": "刪除全部"
     }
 }

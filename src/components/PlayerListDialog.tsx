@@ -3,6 +3,7 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogActions,
     List,
     ListItem,
     ListItemText,
@@ -15,7 +16,8 @@ import {
     Tooltip,
     Snackbar,
     Alert,
-    Stack
+    Stack,
+    Button
 } from '@mui/material';
 import { Delete as DeleteIcon, Add as AddIcon, ContentPaste as ContentPasteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -37,12 +39,22 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
     const [addPlayerOpen, setAddPlayerOpen] = useState(false);
     const [editPlayerOpen, setEditPlayerOpen] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+    const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false);
     const [importResult, setImportResult] = useState<{
         success: number;
         duplicate: number;
         show: boolean;
         duplicateNames?: string[];
     } | null>(null);
+    const [snackbar, setSnackbar] = useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'warning' | 'error';
+    }>({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
 
     const handleDeletePlayer = (playerId: string) => {
         dispatch(deletePlayer(playerId));
@@ -65,6 +77,41 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
     const handleSavePlayer = (updatedPlayer: Player) => {
         // 這裡可以添加額外的邏輯，比如顯示成功訊息
         console.log('Player updated:', updatedPlayer);
+    };
+
+    const handleDeleteAllPlayers = () => {
+        // 檢查是否有球員正在比賽或排隊中
+        const activePlayers = players.filter(p => p.isPlaying || p.isQueuing);
+        if (activePlayers.length > 0) {
+            setSnackbar({
+                open: true,
+                message: t('playerList.cannotDeleteActivePlayers'),
+                severity: 'warning'
+            });
+            return;
+        }
+
+        // 顯示確認對話框
+        setConfirmDeleteAllOpen(true);
+    };
+
+    const handleConfirmDeleteAll = () => {
+        // 刪除所有球員
+        players.forEach(player => {
+            dispatch(deletePlayer(player.id));
+        });
+
+        setSnackbar({
+            open: true,
+            message: t('playerList.allPlayersDeleted'),
+            severity: 'success'
+        });
+
+        setConfirmDeleteAllOpen(false);
+    };
+
+    const handleCancelDeleteAll = () => {
+        setConfirmDeleteAllOpen(false);
     };
 
     const handleImportFromClipboard = async () => {
@@ -142,6 +189,17 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                         {t('playerList.title')}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title={t('playerList.deleteAllPlayers')}>
+                            <Fab
+                                size="small"
+                                color="error"
+                                onClick={handleDeleteAllPlayers}
+                                sx={{ boxShadow: 1 }}
+                                disabled={players.length === 0}
+                            >
+                                <DeleteIcon />
+                            </Fab>
+                        </Tooltip>
                         <Tooltip title={t('playerList.importFromClipboard')}>
                             <Fab
                                 size="small"
@@ -269,6 +327,21 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                 </Alert>
             </Snackbar>
 
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    severity={snackbar.severity}
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+
             <AddPlayerDialog
                 open={addPlayerOpen}
                 onClose={() => setAddPlayerOpen(false)}
@@ -279,6 +352,31 @@ const PlayerListDialog: React.FC<PlayerListDialogProps> = ({ open, onClose }) =>
                 player={selectedPlayer}
                 onSave={handleSavePlayer}
             />
+
+            {/* 確認刪除所有球員對話框 */}
+            <Dialog
+                open={confirmDeleteAllOpen}
+                onClose={handleCancelDeleteAll}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {t('playerList.confirmDeleteAllTitle')}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        {t('playerList.confirmDeleteAllMessage', { count: players.length })}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelDeleteAll} color="primary">
+                        {t('common.cancel')}
+                    </Button>
+                    <Button onClick={handleConfirmDeleteAll} color="error" variant="contained">
+                        {t('playerList.confirmDeleteAll')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

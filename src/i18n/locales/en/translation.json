@@ -115,6 +115,12 @@
             "failed": "Import failed. Please ensure each player name is on a new line",
             "noPlayers": "No players were imported. Please check the clipboard content"
         },
-        "deletePlayer": "Delete Player"
+        "deletePlayer": "Delete Player",
+        "deleteAllPlayers": "Delete All Players",
+        "cannotDeleteActivePlayers": "Cannot delete players who are currently playing or queuing",
+        "allPlayersDeleted": "All players have been deleted",
+        "confirmDeleteAllTitle": "Confirm Delete All Players",
+        "confirmDeleteAllMessage": "Are you sure you want to delete all {{count}} players? This action cannot be undone.",
+        "confirmDeleteAll": "Delete All"
     }
 }
