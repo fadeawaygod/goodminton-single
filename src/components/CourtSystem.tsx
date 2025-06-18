@@ -134,6 +134,7 @@ const DraggableGroup: React.FC<{
             players: group.players,
             index,
             isPlayingGroup: false,
+            group: group,
             fromQueue: true // 添加標記表示來自排隊區
         }),
         collect: (monitor) => ({
@@ -659,7 +660,7 @@ const DroppableQueueArea: React.FC<{
 const StandbyArea: React.FC<{
     players: Player[];
     onPlayerMoveToStandby: (player: Player) => void;
-    onGroupDissolve: (players: Player[]) => void;
+    onGroupDissolve: (group: PlayerGroup) => void;
     courts: CourtType[];
     onPlayerUpdate: (player: Player) => void;
 }> = ({ players, onPlayerMoveToStandby, onGroupDissolve, courts, onPlayerUpdate }) => {
@@ -671,8 +672,8 @@ const StandbyArea: React.FC<{
         drop: (item: any) => {
             if (item.type === ItemTypes.PLAYER) {
                 onPlayerMoveToStandby(item);
-            } else if (item.type === ItemTypes.GROUP && item.isPlayingGroup) {
-                onGroupDissolve(item.players);
+            } else if (item.type === ItemTypes.GROUP) {
+                onGroupDissolve(item.group);
             }
             return {};
         },
@@ -1243,15 +1244,20 @@ export const CourtSystem: React.FC = () => {
     }, [courts, t]);
 
     // 處理場地組別解散到待命區
-    const handleGroupDissolve = (players: Player[]) => {
-        const fromCourt = courts.find(court =>
-            court.group && court.group.players.some(p => players.includes(p))
-        );
-
-        if (!fromCourt) return;
-
+    const handleGroupDissolve = (group: PlayerGroup) => {
+        if (group.court) {
+            setCourts(prevCourts => prevCourts.map(c =>
+                c.id === group?.court?.id
+                    ? { ...c, group: undefined, isActive: false }
+                    : c
+            ));
+            group.court = undefined;
+        }
+        else {
+            setWaitingQueue(prevQueue => prevQueue.filter(g => g.id !== group.id));
+        }
         // 使用 context 的方法將球員移動到待命區
-        movePlayersToStandby(players);
+        movePlayersToStandby(group.players);
 
         setSnackbar({
             open: true,

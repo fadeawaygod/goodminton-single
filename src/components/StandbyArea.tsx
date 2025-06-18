@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { useDrop } from 'react-dnd';
-import { Player, Court } from '../types/court';
+import { Player, Court, PlayerGroup } from '../types/court';
 import { ItemTypes, chameleonColors } from '../constants/court';
 import { DraggablePlayer } from './DraggablePlayer';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ interface StandbyAreaProps {
     players: Player[];
     onPlayerDrop: (player: Player) => void;
     onPlayerMoveToStandby: (player: Player) => void;
-    onGroupDissolve: (players: Player[]) => void;
+    onGroupDissolve: (group: PlayerGroup) => void;
     courts: Court[];
 }
 
@@ -34,7 +34,7 @@ export const StandbyArea: React.FC<StandbyAreaProps> = ({
                     onPlayerMoveToStandby(item);
                 }
             } else if (item.type === ItemTypes.GROUP && item.isPlayingGroup) {
-                onGroupDissolve(item.players);
+                onGroupDissolve(item.group);
             }
             return {};
         },
