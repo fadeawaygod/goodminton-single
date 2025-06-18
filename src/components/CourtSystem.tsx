@@ -893,8 +893,12 @@ export const CourtSystem: React.FC = () => {
     useEffect(() => {
         //TODO: 更新等待隊列和場地狀態
         // 更新待命區
+
+        const existingPlayers = findPlayersOnCourtAndQueue()
+        const existingPlayerNames = existingPlayers.map(p => p.name)
+
         const updatedStandbyPlayers = players.filter(player =>
-            player.enabled && !player.isPlaying && !player.isQueuing
+            player.enabled && !player.group && !existingPlayerNames.includes(player.name)
         );
         setStandbyPlayers(updatedStandbyPlayers);
         // 更新場地中的players
@@ -904,7 +908,7 @@ export const CourtSystem: React.FC = () => {
                     ...court,
                     group: {
                         ...court.group,
-                        players: court.group.players.filter(player => player.enabled && player.isPlaying && !player.isQueuing)
+                        players: court.group.players.filter(player => player.enabled)
                     }
                 };
             }
@@ -913,7 +917,7 @@ export const CourtSystem: React.FC = () => {
         // 更新等待隊列
         setWaitingQueue(prevQueue => prevQueue.map(group => ({
             ...group,
-            players: group.players.filter(player => player.enabled && !player.isPlaying && player.isQueuing)
+            players: group.players.filter(player => player.enabled)
         })));
     }, [players]);
 
@@ -1324,6 +1328,12 @@ export const CourtSystem: React.FC = () => {
             severity: 'success'
         });
     }, [t]);
+
+    const findPlayersOnCourtAndQueue = () => {
+        const playersOnCourt = courts.flatMap(court => court.group?.players || []);
+        const playersInQueue = waitingQueue.flatMap(group => group.players);
+        return [...playersOnCourt, ...playersInQueue];
+    };
 
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
