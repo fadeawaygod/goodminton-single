@@ -68,6 +68,7 @@
         "groupMovedToCourt": "組別已移至場地 {{court}}",
         "groupAssigned": "組別已分配至場地 {{court}}",
         "groupMovedToQueue": "組別已移至排隊區",
+        "groupDissolved": "組別已解散",
         "finishGame": "結束比賽",
         "dropHere": "拖放球員至此",
         "spotsLeft": "個空位",
