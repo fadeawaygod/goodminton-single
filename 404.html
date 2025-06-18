@@ -11,8 +11,15 @@
       const search = window.location.search;
       const hash = window.location.hash;
       
-      // 重定向到 index.html，保持路徑和參數
-      window.location.href = '/goodminton-single/index.html' + path.replace('/goodminton-single', '') + search + hash;
+      // 檢查是否已經在 index.html 路徑下
+      if (path.includes('/index.html')) {
+        // 如果已經包含 index.html，直接重定向到根目錄
+        window.location.href = '/goodminton-single/' + search + hash;
+      } else {
+        // 移除 /goodminton-single 前綴，重定向到 index.html
+        const cleanPath = path.replace('/goodminton-single', '');
+        window.location.href = '/goodminton-single/index.html' + cleanPath + search + hash;
+      }
     </script>
   </body>
 </html> 
