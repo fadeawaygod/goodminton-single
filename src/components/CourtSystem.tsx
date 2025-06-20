@@ -736,14 +736,29 @@ const StandbyArea: React.FC<{
 
 export const CourtSystem: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const [courts, setCourts] = useState<CourtType[]>([]);
-    const [standbyPlayers, setStandbyPlayers] = useState<Player[]>([]);
-    const [waitingQueue, setWaitingQueue] = useState<PlayerGroup[]>([]);
-    const [autoAssign, setAutoAssign] = useState(false);
     const [courtCount, setCourtCount] = useState(() => {
         const stored = localStorage.getItem('courtCount');
         return stored ? Number(stored) : 4;
     });
+    const [courts, setCourts] = useState<CourtType[]>(() => {
+        const stored = localStorage.getItem('courts');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) return parsed;
+            } catch { }
+        }
+        // 預設產生 courtCount 個場地
+        return Array.from({ length: courtCount }, (_, i) => ({
+            id: uuidv4(),
+            name: `${i + 1}`,
+            isActive: false,
+            group: undefined,
+        }));
+    });
+    const [standbyPlayers, setStandbyPlayers] = useState<Player[]>([]);
+    const [waitingQueue, setWaitingQueue] = useState<PlayerGroup[]>([]);
+    const [autoAssign, setAutoAssign] = useState(false);
     const players = useAppSelector(selectAllPlayers);
 
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -853,46 +868,31 @@ export const CourtSystem: React.FC = () => {
 
     // 初始場地設置和場地數量變化處理
     useEffect(() => {
-        // 如果沒有場地，進行初始化
-        if (courts.length === 0) {
-            const initialCourts = Array(courtCount).fill(null).map((_, i) => ({
-                id: uuidv4(),
-                name: `${i + 1}`,
-                players: [],
-                isActive: false,
-                group: undefined,
-            }));
-            setCourts(initialCourts);
-            return;
-        }
-
         // 處理場地數量變化
-        if (courtCount !== courts.length) {
-            setCourts(prevCourts => {
-                if (courtCount > prevCourts.length) {
-                    // 擴充陣列 - 添加新的 court 物件，保留現有場地的名稱
-                    const newCourts = [...prevCourts];
-                    for (let i = prevCourts.length; i < courtCount; i++) {
-                        newCourts.push({
-                            id: uuidv4(),
-                            name: `${i + 1}`, // 新場地使用數字名稱                       
-                            isActive: false,
-                            group: undefined,
-                        });
-                    }
-                    return newCourts;
-                } else if (courtCount < prevCourts.length) {
-                    // 縮減陣列 - 移除多餘的 court 物件，保留前 N 個場地
-                    return prevCourts.slice(0, courtCount).map(court => ({
-                        ...court,
-                        players: [],  // 清空被保留場地的球員
-                        isActive: false,  // 重置活動狀態
-                    }));
+        setCourts(prevCourts => {
+            if (courtCount > prevCourts.length) {
+                // 增加場地：補新名稱
+                const newCourts = [...prevCourts];
+                for (let i = prevCourts.length; i < courtCount; i++) {
+                    newCourts.push({
+                        id: uuidv4(),
+                        name: `${i + 1}`,
+                        isActive: false,
+                        group: undefined,
+                    });
                 }
-                return prevCourts;
-            });
-        }
-    }, [courtCount, courts.length]); // 添加必要的依賴項
+                return newCourts;
+            } else if (courtCount < prevCourts.length) {
+                // 減少場地：保留前 N 個
+                return prevCourts.slice(0, courtCount).map(court => ({
+                    ...court,
+                    players: [],
+                    isActive: false,
+                }));
+            }
+            return prevCourts;
+        });
+    }, [courtCount]);
 
     useEffect(() => {
         //TODO: 更新等待隊列和場地狀態
@@ -1356,6 +1356,11 @@ export const CourtSystem: React.FC = () => {
         setCourtCount(count);
         localStorage.setItem('courtCount', String(count));
     };
+
+    // 新增：courts 狀態有變動時，寫回 localStorage
+    useEffect(() => {
+        localStorage.setItem('courts', JSON.stringify(courts));
+    }, [courts]);
 
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
