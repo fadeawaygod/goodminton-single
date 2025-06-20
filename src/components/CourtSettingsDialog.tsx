@@ -18,12 +18,15 @@ interface CourtSettingsDialogProps {
     setCourtCount: (count: number) => void;
     ttsRate: number;
     setTtsRate: (rate: number) => void;
+    fontSize: number;
+    setFontSize: (size: number) => void;
 }
 
-const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose, courtCount, setCourtCount, ttsRate, setTtsRate }) => {
+const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose, courtCount, setCourtCount, ttsRate, setTtsRate, fontSize, setFontSize }) => {
     const { t } = useTranslation();
     const [localCourtCount, setLocalCourtCount] = React.useState(courtCount);
     const [localTtsRate, setLocalTtsRate] = React.useState(ttsRate);
+    const [localFontSize, setLocalFontSize] = React.useState(fontSize);
 
     // Reset local state when dialog opens
     React.useEffect(() => {
@@ -32,6 +35,9 @@ const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose
     React.useEffect(() => {
         setLocalTtsRate(ttsRate);
     }, [open, ttsRate]);
+    React.useEffect(() => {
+        setLocalFontSize(fontSize);
+    }, [open, fontSize]);
 
     const handleSliderChange = (_event: Event, newValue: number | number[]) => {
         setLocalCourtCount(newValue as number);
@@ -39,10 +45,14 @@ const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose
     const handleTtsRateChange = (_event: Event, newValue: number | number[]) => {
         setLocalTtsRate(newValue as number);
     };
+    const handleFontSizeChange = (_event: Event, newValue: number | number[]) => {
+        setLocalFontSize(newValue as number);
+    };
 
     const handleSave = () => {
         setCourtCount(localCourtCount);
         setTtsRate(localTtsRate);
+        setFontSize(localFontSize);
         onClose();
     };
 
@@ -101,6 +111,22 @@ const CourtSettingsDialog: React.FC<CourtSettingsDialogProps> = ({ open, onClose
                         />
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                             {t('settings.ttsRate', 'TTS語速')}: {localTtsRate}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ mt: 4 }}>
+                        <Typography gutterBottom>
+                            {t('settings.playerFontSize', '球員字體大小')}
+                        </Typography>
+                        <Slider
+                            value={localFontSize}
+                            onChange={handleFontSizeChange}
+                            min={0.8}
+                            max={1.5}
+                            step={0.05}
+                            valueLabelDisplay="auto"
+                        />
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            {t('settings.playerFontSize', '球員字體大小')}: {localFontSize}
                         </Typography>
                     </Box>
                 </Box>

@@ -13,6 +13,7 @@ import {
     Snackbar,
     IconButton,
     Tooltip,
+    Slider,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -121,7 +122,8 @@ const DraggableGroup: React.FC<{
     onPlayerDropToGroup: (player: Player) => void;
     onGroupMove: (dragIndex: number, hoverIndex: number) => void;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ group, index, onPlayerDropToGroup, onGroupMove, onPlayerUpdate }) => {
+    fontSize: number;
+}> = ({ group, index, onPlayerDropToGroup, onGroupMove, onPlayerUpdate, fontSize }) => {
     const { t } = useTranslation();
     const dropTargetRef = useRef<HTMLDivElement>(null);
 
@@ -257,6 +259,7 @@ const DraggableGroup: React.FC<{
                             key={player.id}
                             player={player}
                             onPlayerUpdate={onPlayerUpdate}
+                            fontSize={fontSize}
                         />
                     ))}
                 </Box>
@@ -270,7 +273,8 @@ const CourtGroup: React.FC<{
     group: PlayerGroup | undefined;
     courtId: string;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ group, courtId, onPlayerUpdate }) => {
+    fontSize: number;
+}> = ({ group, courtId, onPlayerUpdate, fontSize }) => {
     const { t } = useTranslation();
     const [timeElapsed, setTimeElapsed] = useState<number>(0);
     const startTimeRef = useRef<Date>(new Date());
@@ -379,6 +383,7 @@ const CourtGroup: React.FC<{
                             key={player.id}
                             player={player}
                             onPlayerUpdate={onPlayerUpdate}
+                            fontSize={fontSize}
                         />
                     ))}
                 </Box>
@@ -397,7 +402,8 @@ const Court: React.FC<{
     onGroupMove: (fromCourtId: string, toCourtId: string) => void;
     onCourtNameChange?: (courtId: string, newName: string) => void;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ court, onFinishGame, onPlayerDropToGroup, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange, onPlayerUpdate }) => {
+    fontSize: number;
+}> = ({ court, onFinishGame, onPlayerDropToGroup, onCreateGroup, onGroupAssign, onGroupMove, onCourtNameChange, onPlayerUpdate, fontSize }) => {
     const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(court.name);
@@ -573,6 +579,7 @@ const Court: React.FC<{
                             group={court.group}
                             courtId={court.id}
                             onPlayerUpdate={onPlayerUpdate}
+                            fontSize={fontSize}
                         />
                     </Box>
                 )}
@@ -589,7 +596,8 @@ const DroppableQueueArea: React.FC<{
     onQueueReorder: (dragIndex: number, hoverIndex: number) => void;
     onPlayingGroupDrop: (group: PlayerGroup) => void;
     onPlayerUpdate: (player: Player) => void;
-}> = ({ waitingQueue, onCreateNewGroup, onPlayerDropToGroup, onQueueReorder, onPlayingGroupDrop, onPlayerUpdate }) => {
+    fontSize: number;
+}> = ({ waitingQueue, onCreateNewGroup, onPlayerDropToGroup, onQueueReorder, onPlayingGroupDrop, onPlayerUpdate, fontSize }) => {
     const { t } = useTranslation();
     const [{ isOver }, dropRef] = useDrop(() => ({
         accept: [ItemTypes.PLAYER, ItemTypes.GROUP],
@@ -648,6 +656,7 @@ const DroppableQueueArea: React.FC<{
                             onPlayerDropToGroup={(player) => onPlayerDropToGroup(player, group.id)}
                             onGroupMove={onQueueReorder}
                             onPlayerUpdate={onPlayerUpdate}
+                            fontSize={fontSize}
                         />
                     </ListItem>
                 ))}
@@ -663,7 +672,8 @@ const StandbyArea: React.FC<{
     onGroupDissolve: (group: PlayerGroup) => void;
     courts: CourtType[];
     onPlayerUpdate: (player: Player) => void;
-}> = ({ players, onPlayerMoveToStandby, onGroupDissolve, courts, onPlayerUpdate }) => {
+    fontSize: number;
+}> = ({ players, onPlayerMoveToStandby, onGroupDissolve, courts, onPlayerUpdate, fontSize }) => {
     const { t } = useTranslation();
     const dropTargetRef = useRef<HTMLDivElement>(null);
 
@@ -727,6 +737,7 @@ const StandbyArea: React.FC<{
                         key={player.id}
                         player={player}
                         onPlayerUpdate={onPlayerUpdate}
+                        fontSize={fontSize}
                     />
                 ))}
             </Box>
@@ -779,6 +790,16 @@ export const CourtSystem: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('ttsRate', String(ttsRate));
     }, [ttsRate]);
+
+    const [fontSize, setFontSize] = useState(() => {
+        const stored = localStorage.getItem('fontSize');
+        return stored ? Number(stored) : 1;
+    });
+
+    // fontSize 變動時寫回 localStorage
+    useEffect(() => {
+        localStorage.setItem('fontSize', String(fontSize));
+    }, [fontSize]);
 
     // 基礎 TTS 函數
     const playTTS = useCallback((text: string, lang: string = 'zh-TW') => {
@@ -1386,6 +1407,8 @@ export const CourtSystem: React.FC = () => {
                 setCourtCount={handleSetCourtCount}
                 ttsRate={ttsRate}
                 setTtsRate={setTtsRate}
+                fontSize={fontSize}
+                setFontSize={setFontSize}
             />
             <PlayerListDialog
                 open={isPlayerListOpen}
@@ -1438,6 +1461,7 @@ export const CourtSystem: React.FC = () => {
                                         onGroupMove={handleCourtGroupMove}
                                         onCourtNameChange={handleCourtNameChange}
                                         onPlayerUpdate={handlePlayerUpdate}
+                                        fontSize={fontSize}
                                     />
                                 </Grid>
                             ))}
@@ -1469,6 +1493,7 @@ export const CourtSystem: React.FC = () => {
                                     onQueueReorder={handleQueueReorder}
                                     onPlayingGroupDrop={handlePlayingGroupToQueue}
                                     onPlayerUpdate={handlePlayerUpdate}
+                                    fontSize={fontSize}
                                 />
                             </Paper>
                         </Grid>
@@ -1479,6 +1504,7 @@ export const CourtSystem: React.FC = () => {
                                 onGroupDissolve={handleGroupDissolve}
                                 courts={courts}
                                 onPlayerUpdate={handlePlayerUpdate}
+                                fontSize={fontSize}
                             />
                         </Grid>
                     </Grid>

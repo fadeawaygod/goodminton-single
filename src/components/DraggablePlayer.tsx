@@ -18,9 +18,10 @@ const genderColors = {
 interface DraggablePlayerProps {
     player: Player;
     onPlayerUpdate?: (player: Player) => void;
+    fontSize?: number;
 }
 
-export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player, onPlayerUpdate }) => {
+export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player, onPlayerUpdate, fontSize = 1 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [{ isDragging }, dragRef, preview] = useDrag(() => ({
         type: ItemTypes.PLAYER,
@@ -88,7 +89,7 @@ export const DraggablePlayer: React.FC<DraggablePlayerProps> = ({ player, onPlay
                             WebkitUserSelect: 'none',
                             MozUserSelect: 'none',
                             '& .MuiChip-label': {
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontSize: `${Math.max(0.75, Math.min(1.5, fontSize)) * 0.875}rem`,
                                 color: '#000000',
                                 fontWeight: 'bold',
                             },
