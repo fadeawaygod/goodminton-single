@@ -376,7 +376,7 @@ const CourtGroup: React.FC<{
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: 0.5,
-                    pt: 1
+                    pt: 0
                 }}>
                     {group?.players.map(player => (
                         <DraggablePlayer
