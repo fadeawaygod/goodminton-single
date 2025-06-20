@@ -1373,7 +1373,6 @@ export const CourtSystem: React.FC = () => {
         const courtsToStore = courts.map(court => ({
             id: court.id,
             name: court.name,
-            isActive: court.isActive,
         }));
         localStorage.setItem('courts', JSON.stringify(courtsToStore));
     }, [courts]);
