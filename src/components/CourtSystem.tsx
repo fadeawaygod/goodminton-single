@@ -770,6 +770,16 @@ export const CourtSystem: React.FC = () => {
         severity: 'success' | 'info' | 'warning' | 'error';
     }>({ open: false, message: '', severity: 'info' });
 
+    const [ttsRate, setTtsRate] = useState(() => {
+        const stored = localStorage.getItem('ttsRate');
+        return stored ? Number(stored) : 0.6;
+    });
+
+    // ttsRate 變動時寫回 localStorage
+    useEffect(() => {
+        localStorage.setItem('ttsRate', String(ttsRate));
+    }, [ttsRate]);
+
     // 基礎 TTS 函數
     const playTTS = useCallback((text: string, lang: string = 'zh-TW') => {
         if (!ttsEnabled) return Promise.resolve();
@@ -787,7 +797,7 @@ export const CourtSystem: React.FC = () => {
             // 創建語音實例
             const utterance = new window.SpeechSynthesisUtterance(text);
             utterance.lang = lang;
-            utterance.rate = 0.6;
+            utterance.rate = ttsRate;
             utterance.pitch = 1;
             utterance.volume = 1;
             utterance.onend = () => resolve();
@@ -803,7 +813,7 @@ export const CourtSystem: React.FC = () => {
             // 播放語音
             window.speechSynthesis.speak(utterance);
         });
-    }, [ttsEnabled, setSnackbar]);
+    }, [ttsEnabled, setSnackbar, ttsRate]);
 
     // 場地 TTS 函數
     const playCourtTTS = useCallback(async (names: string[], number: string, lang?: string) => {
@@ -1364,7 +1374,14 @@ export const CourtSystem: React.FC = () => {
 
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
-            <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} courtCount={courtCount} setCourtCount={handleSetCourtCount} />
+            <CourtSettingsDialog
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                courtCount={courtCount}
+                setCourtCount={handleSetCourtCount}
+                ttsRate={ttsRate}
+                setTtsRate={setTtsRate}
+            />
             <PlayerListDialog
                 open={isPlayerListOpen}
                 onClose={() => setIsPlayerListOpen(false)}
