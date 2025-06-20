@@ -1369,7 +1369,13 @@ export const CourtSystem: React.FC = () => {
 
     // 新增：courts 狀態有變動時，寫回 localStorage
     useEffect(() => {
-        localStorage.setItem('courts', JSON.stringify(courts));
+        // 只儲存場地基本資訊，排除循環引用的 group 和 players 資料
+        const courtsToStore = courts.map(court => ({
+            id: court.id,
+            name: court.name,
+            isActive: court.isActive,
+        }));
+        localStorage.setItem('courts', JSON.stringify(courtsToStore));
     }, [courts]);
 
     return (
