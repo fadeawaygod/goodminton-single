@@ -492,7 +492,7 @@ const Court: React.FC<{
                 elevation={1}
                 sx={{
                     p: { xs: 1, sm: 2 },
-                    height: { xs: '150px', sm: '200px' },
+                    minHeight: { xs: '150px', sm: '200px' },
                     backgroundColor: hasGroup ? chameleonColors.active : chameleonColors.background,
                     '&:hover': hasGroup ? {
                         backgroundColor: chameleonColors.hover,
