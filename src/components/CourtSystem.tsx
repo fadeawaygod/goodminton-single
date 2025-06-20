@@ -740,7 +740,10 @@ export const CourtSystem: React.FC = () => {
     const [standbyPlayers, setStandbyPlayers] = useState<Player[]>([]);
     const [waitingQueue, setWaitingQueue] = useState<PlayerGroup[]>([]);
     const [autoAssign, setAutoAssign] = useState(false);
-    const [courtCount, setCourtCount] = useState(4);
+    const [courtCount, setCourtCount] = useState(() => {
+        const stored = localStorage.getItem('courtCount');
+        return stored ? Number(stored) : 4;
+    });
     const players = useAppSelector(selectAllPlayers);
 
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1348,9 +1351,15 @@ export const CourtSystem: React.FC = () => {
         return [...playersOnCourt, ...playersInQueue];
     };
 
+    // 新增：setCourtCount 時同步寫入 localStorage
+    const handleSetCourtCount = (count: number) => {
+        setCourtCount(count);
+        localStorage.setItem('courtCount', String(count));
+    };
+
     return (
         <DndProvider backend={MultiBackend} options={HTML5toTouch}>
-            <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} courtCount={courtCount} setCourtCount={setCourtCount} />
+            <CourtSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} courtCount={courtCount} setCourtCount={handleSetCourtCount} />
             <PlayerListDialog
                 open={isPlayerListOpen}
                 onClose={() => setIsPlayerListOpen(false)}
