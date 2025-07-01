@@ -340,7 +340,7 @@ const CourtGroup: React.FC<{
                     borderColor: chameleonColors.group.border,
                     backgroundColor: chameleonColors.group.background,
                     borderRadius: 2,
-                    height: '90%',
+                    height: '100%',
                     position: 'relative',
                     transition: 'all 0.3s ease',
                 }}
